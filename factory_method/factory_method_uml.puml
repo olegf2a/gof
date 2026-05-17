@@ -1,0 +1,97 @@
+@startuml Factory_Method_Pattern
+
+title Factory Method Pattern - Oven Factory
+
+' Client
+class Client {
+  +main()
+}
+
+' Dispatcher (Factory Function)
+class Dispatcher {
+  +get_oven(dish_type: str): Oven
+}
+
+' Abstract Product
+abstract class Dish {
+  #name: str
+  +__init__(name: str)
+  +{abstract} prepare(): str
+  +{abstract} get_cooking_temp(): int
+  +{abstract} get_cooking_time(): int
+  +__str__(): str
+}
+
+' Concrete Products
+class Pizza {
+  -toppings: str
+  +__init__(toppings: str = "margherita")
+  +prepare(): str
+  +get_cooking_temp(): int
+  +get_cooking_time(): int
+}
+
+class Lasagna {
+  -layers: int
+  +__init__(layers: int = 6)
+  +prepare(): str
+  +get_cooking_temp(): int
+  +get_cooking_time(): int
+}
+
+class Cookies {
+  -cookie_type: str
+  -batch_size: int
+  +__init__(cookie_type: str = "chocolate chip", batch_size: int = 24)
+  +prepare(): str
+  +get_cooking_temp(): int
+  +get_cooking_time(): int
+}
+
+' Abstract Creator
+abstract class Oven {
+  +cook(): str
+  +{abstract} create_dish(): Dish
+}
+
+' Concrete Creators
+class PizzaOven {
+  +create_dish(): Pizza
+}
+
+class LasagnaOven {
+  +create_dish(): Lasagna
+}
+
+class CookieOven {
+  +create_dish(): Cookies
+}
+
+' Relationships
+Client --> Dispatcher : uses
+Dispatcher --> Oven : creates
+
+Dish <|-- Pizza
+Dish <|-- Lasagna
+Dish <|-- Cookies
+
+Oven <|-- PizzaOven
+Oven <|-- LasagnaOven
+Oven <|-- CookieOven
+
+PizzaOven ..> Pizza : creates
+LasagnaOven ..> Lasagna : creates
+CookieOven ..> Cookies : creates
+
+Oven --> Dish : uses
+
+' Notes
+note right of Oven : Template Method:\ncook() defines the\ncooking algorithm\nusing create_dish()
+
+note right of Dispatcher : Factory Function:\nReturns appropriate\noven based on\ndish_type parameter
+
+note top of Dish : Abstract Product:\nDefines interface\nfor all dishes
+
+note bottom of Oven : Abstract Creator:\nDefines factory method\ncreate_dish()
+
+@enduml
