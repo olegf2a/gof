@@ -2,6 +2,43 @@
 
 An implementation of the Abstract Factory design pattern using an international cafe specializing in different national cuisines.
 
+## Problem and Solution
+
+### The Problem
+When building applications that need to support multiple product families or variants, you often face these challenges:
+
+- **Tight Coupling**: Creating objects directly with `new` operators makes your code dependent on specific concrete classes
+- **Inconsistent Product Families**: Nothing prevents mixing products from different families (e.g., serving Japanese sushi with American fries)
+- **Difficult Extension**: Adding new product families requires modifying existing client code throughout the application
+- **Inflexible Configuration**: Switching between product families at runtime becomes complex and error-prone
+
+For example, imagine a restaurant application that needs to serve different national cuisines. Without proper abstraction, you might end up with code like:
+```python
+if cuisine_type == "japanese":
+    main = Sushi()
+    side = MisoSoup()
+    # Risk: accidentally mixing with AmericanFries()
+elif cuisine_type == "american":
+    main = Burger()
+    side = Fries()
+    # Adding new cuisine requires modifying this code
+```
+
+### The Solution
+The Abstract Factory pattern solves these problems by:
+
+1. **Defining Abstract Product Interfaces**: Each product type (MainDish, SideDish, etc.) has a clear contract
+2. **Creating Product Families**: Each concrete factory produces a complete, consistent family of related products
+3. **Encapsulating Object Creation**: Clients depend only on abstract interfaces, not concrete implementations
+4. **Enabling Easy Extension**: New product families can be added without changing existing code
+
+In our cafe example:
+```python
+# Client code remains the same regardless of cuisine
+cafe = Cafe(kitchen_factory)  # kitchen_factory can be any cuisine
+meal = cafe.serve_complete_meal()  # Always gets consistent family
+```
+
 ## Pattern Overview
 
 The Abstract Factory pattern provides an interface for creating families of related or dependent objects without specifying their concrete classes. In this implementation:
