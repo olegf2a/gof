@@ -1,0 +1,24 @@
+# .gitlab-ci.yml
+# Runs pre-commit hooks on every push and merge request.
+
+stages:
+  - lint
+
+pre-commit:
+  stage: lint
+  image: python:3.11
+  before_script:
+    - pip install --no-cache-dir pre-commit
+  script:
+    - pre-commit run --all-files --show-diff-on-failure
+  cache:
+    key: pre-commit-${CI_JOB_IMAGE}
+    paths:
+      - ${PRE_COMMIT_HOME}
+  variables:
+    # Cache the hook environments between runs so jobs are fast after the first one
+    PRE_COMMIT_HOME: ${CI_PROJECT_DIR}/.cache/pre-commit
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
