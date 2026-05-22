@@ -3,7 +3,7 @@
 from .car_factory import CarFactory
 
 
-def main():
+def main() -> None:
     """Demonstrate the Car Prototype pattern"""
     print("🚗 Car Prototype Pattern Demo")
     print("=" * 50)
@@ -19,14 +19,14 @@ def main():
         CarFactory.create_sedan(color="Red", license_plate="FAST-01"),
         CarFactory.create_truck(color="White", license_plate="WORK-22"),
         CarFactory.create_minivan(license_plate="FAMILY"),  # Keep default blue color
-        CarFactory.create_car("sedan", color="Black"),       # Using generic method
+        CarFactory.create_car("sedan", color="Black"),  # Using generic method
     ]
 
     for i, car in enumerate(cars, 1):
         print(f"\n{i}. {car}")
         specs = car.get_specifications()
         print("   Key Specifications:")
-        for key in ['Type', 'Engine', 'Max Speed', 'Color', 'License Plate']:
+        for key in ["Type", "Engine", "Max Speed", "Color", "License Plate"]:
             print(f"   {key}: {specs[key]}")
 
     # Demonstrate that immutable fields cannot be changed

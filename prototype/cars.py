@@ -2,7 +2,7 @@
 
 import copy
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -28,28 +28,30 @@ class Car:
     color: str = "White"
     license_plate: str = "TEMP-000"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Ensure immutable fields cannot be modified after creation"""
         # Store original values to detect unauthorized changes
         self._original_config = {
-            'car_type': self.car_type,
-            'engine_type': self.engine_type,
-            'transmission': self.transmission,
-            'body_style': self.body_style,
-            'wheels': self.wheels,
-            'doors': self.doors,
-            'max_speed': self.max_speed,
-            'fuel_capacity': self.fuel_capacity
+            "car_type": self.car_type,
+            "engine_type": self.engine_type,
+            "transmission": self.transmission,
+            "body_style": self.body_style,
+            "wheels": self.wheels,
+            "doors": self.doors,
+            "max_speed": self.max_speed,
+            "fuel_capacity": self.fuel_capacity,
         }
 
-    def _clone(self) -> 'Car':
+    def _clone(self) -> "Car":
         """
         Internal clone method - should not be called directly by client code.
         Creates a deep copy of the current car instance.
         """
         return copy.deepcopy(self)
 
-    def customize(self, color: str = None, license_plate: str = None) -> 'Car':
+    def customize(
+        self, color: Optional[str] = None, license_plate: Optional[str] = None
+    ) -> "Car":
         """
         Create a customized copy of this car with new color and/or license plate.
 
@@ -72,16 +74,16 @@ class Car:
     def get_specifications(self) -> Dict[str, Any]:
         """Get complete car specifications"""
         return {
-            'Type': self.car_type,
-            'Engine': self.engine_type,
-            'Transmission': self.transmission,
-            'Body Style': self.body_style,
-            'Wheels': self.wheels,
-            'Doors': self.doors,
-            'Max Speed': f"{self.max_speed} km/h",
-            'Fuel Capacity': f"{self.fuel_capacity}L",
-            'Color': self.color,
-            'License Plate': self.license_plate
+            "Type": self.car_type,
+            "Engine": self.engine_type,
+            "Transmission": self.transmission,
+            "Body Style": self.body_style,
+            "Wheels": self.wheels,
+            "Doors": self.doors,
+            "Max Speed": f"{self.max_speed} km/h",
+            "Fuel Capacity": f"{self.fuel_capacity}L",
+            "Color": self.color,
+            "License Plate": self.license_plate,
         }
 
     def __str__(self) -> str:
@@ -91,15 +93,17 @@ class Car:
     def __setattr__(self, name: str, value: Any) -> None:
         """Override setattr to prevent modification of immutable fields after initialization"""
         # Allow setting during initialization
-        if not hasattr(self, '_original_config'):
+        if not hasattr(self, "_original_config"):
             super().__setattr__(name, value)
             return
 
         # Allow modification of mutable fields only
-        if name in ['color', 'license_plate']:
+        if name in ["color", "license_plate"]:
             super().__setattr__(name, value)
         elif name in self._original_config:
-            raise AttributeError(f"Cannot modify immutable field '{name}' after car creation")
+            raise AttributeError(
+                f"Cannot modify immutable field '{name}' after car creation"
+            )
         else:
             super().__setattr__(name, value)
 
@@ -115,7 +119,7 @@ SEDAN_PROTOTYPE = Car(
     max_speed=180,
     fuel_capacity=60.0,
     color="Silver",
-    license_plate="SED-001"
+    license_plate="SED-001",
 )
 
 TRUCK_PROTOTYPE = Car(
@@ -128,7 +132,7 @@ TRUCK_PROTOTYPE = Car(
     max_speed=160,
     fuel_capacity=90.0,
     color="Black",
-    license_plate="TRK-001"
+    license_plate="TRK-001",
 )
 
 MINIVAN_PROTOTYPE = Car(
@@ -141,5 +145,5 @@ MINIVAN_PROTOTYPE = Car(
     max_speed=170,
     fuel_capacity=75.0,
     color="Blue",
-    license_plate="VAN-001"
+    license_plate="VAN-001",
 )

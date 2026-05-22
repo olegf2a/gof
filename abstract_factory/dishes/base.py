@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 
+
 class MainDish(ABC):
     """Abstract main dish product"""
 
@@ -16,6 +17,7 @@ class MainDish(ABC):
     @abstractmethod
     def get_calories(self) -> int:
         pass
+
 
 class SideDish(ABC):
     """Abstract side dish product"""
@@ -32,6 +34,7 @@ class SideDish(ABC):
     def get_portion_size(self) -> str:
         pass
 
+
 class Dessert(ABC):
     """Abstract dessert product"""
 
@@ -46,6 +49,7 @@ class Dessert(ABC):
     @abstractmethod
     def get_sweetness_level(self) -> str:
         pass
+
 
 class Drink(ABC):
     """Abstract drink product"""

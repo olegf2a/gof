@@ -1,6 +1,7 @@
 """American cuisine dish implementations"""
 
-from ..dishes import MainDish, SideDish, Dessert, Drink
+from ..dishes import Dessert, Drink, MainDish, SideDish
+
 
 class Burger(MainDish):
     """Classic American main dish"""
@@ -14,6 +15,7 @@ class Burger(MainDish):
     def get_calories(self) -> int:
         return 650
 
+
 class Fries(SideDish):
     """American side dish"""
 
@@ -26,6 +28,7 @@ class Fries(SideDish):
     def get_portion_size(self) -> str:
         return "Large portion (200g)"
 
+
 class ApplePie(Dessert):
     """Traditional American dessert"""
 
@@ -37,6 +40,7 @@ class ApplePie(Dessert):
 
     def get_sweetness_level(self) -> str:
         return "Sweet with cinnamon"
+
 
 class Cola(Drink):
     """American beverage"""
