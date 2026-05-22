@@ -1,0 +1,202 @@
+@startuml Abstract_Factory_Pattern
+
+title Abstract Factory Pattern - International Cafe
+
+' Client
+class Cafe {
+  -kitchen: CuisineFactory
+  -cuisine_name: str
+  +__init__(kitchen: CuisineFactory)
+  +serve_complete_meal(): str
+  +change_kitchen(kitchen: CuisineFactory)
+  +get_menu_info(): str
+}
+
+' Abstract Factory
+abstract class CuisineFactory {
+  +{abstract} create_main_dish(): MainDish
+  +{abstract} create_side_dish(): SideDish
+  +{abstract} create_dessert(): Dessert
+  +{abstract} create_drink(): Drink
+  +create_complete_meal(): dict
+  +{abstract} get_cuisine_name(): str
+}
+
+' Concrete Factories
+class JapaneseKitchen {
+  +create_main_dish(): MainDish
+  +create_side_dish(): SideDish
+  +create_dessert(): Dessert
+  +create_drink(): Drink
+  +get_cuisine_name(): str
+}
+
+class AmericanKitchen {
+  +create_main_dish(): MainDish
+  +create_side_dish(): SideDish
+  +create_dessert(): Dessert
+  +create_drink(): Drink
+  +get_cuisine_name(): str
+}
+
+class UkrainianKitchen {
+  +create_main_dish(): MainDish
+  +create_side_dish(): SideDish
+  +create_dessert(): Dessert
+  +create_drink(): Drink
+  +get_cuisine_name(): str
+}
+
+' Abstract Products
+abstract class MainDish {
+  +{abstract} prepare(): str
+  +{abstract} get_name(): str
+  +{abstract} get_calories(): int
+}
+
+abstract class SideDish {
+  +{abstract} prepare(): str
+  +{abstract} get_name(): str
+  +{abstract} get_portion_size(): str
+}
+
+abstract class Dessert {
+  +{abstract} prepare(): str
+  +{abstract} get_name(): str
+  +{abstract} get_sweetness_level(): str
+}
+
+abstract class Drink {
+  +{abstract} prepare(): str
+  +{abstract} get_name(): str
+  +{abstract} get_temperature(): str
+}
+
+' Japanese Concrete Products
+class Sushi {
+  +prepare(): str
+  +get_name(): str
+  +get_calories(): int
+}
+
+class Miso {
+  +prepare(): str
+  +get_name(): str
+  +get_portion_size(): str
+}
+
+class Mochi {
+  +prepare(): str
+  +get_name(): str
+  +get_sweetness_level(): str
+}
+
+class GreenTea {
+  +prepare(): str
+  +get_name(): str
+  +get_temperature(): str
+}
+
+' American Concrete Products
+class Burger {
+  +prepare(): str
+  +get_name(): str
+  +get_calories(): int
+}
+
+class Fries {
+  +prepare(): str
+  +get_name(): str
+  +get_portion_size(): str
+}
+
+class ApplePie {
+  +prepare(): str
+  +get_name(): str
+  +get_sweetness_level(): str
+}
+
+class Cola {
+  +prepare(): str
+  +get_name(): str
+  +get_temperature(): str
+}
+
+' Ukrainian Concrete Products
+class Borscht {
+  +prepare(): str
+  +get_name(): str
+  +get_calories(): int
+}
+
+class Varenyky {
+  +prepare(): str
+  +get_name(): str
+  +get_portion_size(): str
+}
+
+class Syrniki {
+  +prepare(): str
+  +get_name(): str
+  +get_sweetness_level(): str
+}
+
+class Kompot {
+  +prepare(): str
+  +get_name(): str
+  +get_temperature(): str
+}
+
+' Relationships
+Cafe --> CuisineFactory : uses
+
+CuisineFactory <|-- JapaneseKitchen
+CuisineFactory <|-- AmericanKitchen
+CuisineFactory <|-- UkrainianKitchen
+
+MainDish <|-- Sushi
+MainDish <|-- Burger
+MainDish <|-- Borscht
+
+SideDish <|-- Miso
+SideDish <|-- Fries
+SideDish <|-- Varenyky
+
+Dessert <|-- Mochi
+Dessert <|-- ApplePie
+Dessert <|-- Syrniki
+
+Drink <|-- GreenTea
+Drink <|-- Cola
+Drink <|-- Kompot
+
+JapaneseKitchen ..> Sushi : creates
+JapaneseKitchen ..> Miso : creates
+JapaneseKitchen ..> Mochi : creates
+JapaneseKitchen ..> GreenTea : creates
+
+AmericanKitchen ..> Burger : creates
+AmericanKitchen ..> Fries : creates
+AmericanKitchen ..> ApplePie : creates
+AmericanKitchen ..> Cola : creates
+
+UkrainianKitchen ..> Borscht : creates
+UkrainianKitchen ..> Varenyky : creates
+UkrainianKitchen ..> Syrniki : creates
+UkrainianKitchen ..> Kompot : creates
+
+CuisineFactory --> MainDish : creates
+CuisineFactory --> SideDish : creates
+CuisineFactory --> Dessert : creates
+CuisineFactory --> Drink : creates
+
+' Notes
+note right of CuisineFactory : Abstract Factory:\nDefines interface for\ncreating families of\nrelated products
+
+note left of Cafe : Client:\nUses factories to create\ncomplete meals from\ndifferent cuisines
+
+note top of MainDish : Abstract Products:\nDefine interfaces for\ndifferent dish types
+
+note bottom of JapaneseKitchen : Concrete Factories:\nImplement creation of\nspecific product families
+
+@enduml
