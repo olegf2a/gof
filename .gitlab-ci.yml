@@ -6,7 +6,7 @@ stages:
 
 pre-commit:
   stage: lint
-  image: python:3.11-slim
+  image: python:3.11
   before_script:
     - pip install --no-cache-dir pre-commit
   script:
