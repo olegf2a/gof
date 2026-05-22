@@ -1,0 +1,93 @@
+@startuml Prototype Pattern - Car Manufacturing
+!theme plain
+
+package "Prototype Pattern" {
+
+    abstract class Prototype {
+        +clone(): Prototype
+    }
+
+    class Car {
+        -car_type: str
+        -engine_type: str
+        -transmission: str
+        -body_style: str
+        -wheels: int
+        -doors: int
+        -max_speed: int
+        -fuel_capacity: float
+        +color: str
+        +license_plate: str
+        --
+        -_clone(): Car
+        +customize(color, license_plate): Car
+        +get_specifications(): Dict
+        +__setattr__(name, value): void
+    }
+
+    class CarFactory {
+        +create_sedan(color, license_plate): Car
+        +create_truck(color, license_plate): Car
+        +create_minivan(color, license_plate): Car
+        +create_car(car_type, color, license_plate): Car
+        +get_available_types(): List[str]
+        +show_prototypes(): void
+    }
+
+    class "SEDAN_PROTOTYPE" as sedan <<instance>> {
+        car_type = "Sedan"
+        engine_type = "2.0L Inline-4 Turbo"
+        transmission = "8-Speed Automatic"
+        color = "Silver"
+    }
+
+    class "TRUCK_PROTOTYPE" as truck <<instance>> {
+        car_type = "Pickup Truck"
+        engine_type = "3.5L V6 Twin-Turbo"
+        transmission = "10-Speed Automatic"
+        color = "Black"
+    }
+
+    class "MINIVAN_PROTOTYPE" as minivan <<instance>> {
+        car_type = "Minivan"
+        engine_type = "3.6L V6"
+        transmission = "9-Speed Automatic"
+        color = "Blue"
+    }
+
+    class Client {
+        +main(): void
+    }
+}
+
+' Relationships
+Prototype <|-- Car : implements
+Car <-- sedan : instance of
+Car <-- truck : instance of
+Car <-- minivan : instance of
+CarFactory ..> sedan : uses
+CarFactory ..> truck : uses
+CarFactory ..> minivan : uses
+CarFactory --> Car : creates
+Client --> CarFactory : uses
+
+' Notes
+note right of Car
+  Only color and license_plate
+  can be modified after creation.
+  Other fields are immutable.
+end note
+
+note right of CarFactory
+  Provides convenient methods
+  without exposing clone().
+  Handles all prototype creation.
+end note
+
+note bottom of sedan
+  Predefined prototypes with
+  complete configurations.
+  Cloned to create new instances.
+end note
+
+@enduml

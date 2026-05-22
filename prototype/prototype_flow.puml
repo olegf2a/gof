@@ -1,0 +1,51 @@
+@startuml Prototype Pattern Flow
+!theme plain
+
+title Prototype Pattern - Car Creation Flow
+
+actor Client
+participant CarFactory
+participant "SEDAN_PROTOTYPE\n:Car" as SedanProto
+participant "TRUCK_PROTOTYPE\n:Car" as TruckProto
+participant "MINIVAN_PROTOTYPE\n:Car" as MinivanProto
+participant "New Car\n:Car" as NewCar
+
+== Car Creation Process ==
+
+Client -> CarFactory : create_sedan(color="Red", license_plate="ABC-123")
+activate CarFactory
+
+CarFactory -> SedanProto : customize(color="Red", license_plate="ABC-123")
+activate SedanProto
+
+SedanProto -> SedanProto : _clone()
+SedanProto -> NewCar : **create copy**
+activate NewCar
+
+SedanProto -> NewCar : set color = "Red"
+SedanProto -> NewCar : set license_plate = "ABC-123"
+
+NewCar --> SedanProto : return customized car
+deactivate NewCar
+SedanProto --> CarFactory : return new car instance
+deactivate SedanProto
+
+CarFactory --> Client : return Red Sedan (ABC-123)
+deactivate CarFactory
+
+== Protection Mechanism ==
+
+Client -> NewCar : color = "Blue"
+NewCar --> Client : ✓ Success (mutable field)
+
+Client -> NewCar : engine_type = "V8"
+NewCar --> Client : ✗ AttributeError (immutable field)
+
+note right of NewCar
+  • Cloning creates independent instances
+  • Only color & license_plate are mutable
+  • All technical specs are protected
+  • Each car maintains its own state
+end note
+
+@enduml
