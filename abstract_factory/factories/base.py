@@ -1,7 +1,10 @@
 """Abstract factory interface for cuisine kitchens"""
 
 from abc import ABC, abstractmethod
-from ..dishes import MainDish, SideDish, Dessert, Drink
+from typing import Any, Dict
+
+from ..dishes import Dessert, Drink, MainDish, SideDish
+
 
 class CuisineFactory(ABC):
     """Abstract factory for creating complete meals from different cuisines"""
@@ -26,13 +29,13 @@ class CuisineFactory(ABC):
         """Create a traditional drink"""
         pass
 
-    def create_complete_meal(self) -> dict:
+    def create_complete_meal(self) -> Dict[str, Any]:
         """Create a complete meal with all components"""
         return {
-            'main_dish': self.create_main_dish(),
-            'side_dish': self.create_side_dish(),
-            'dessert': self.create_dessert(),
-            'drink': self.create_drink()
+            "main_dish": self.create_main_dish(),
+            "side_dish": self.create_side_dish(),
+            "dessert": self.create_dessert(),
+            "drink": self.create_drink(),
         }
 
     @abstractmethod

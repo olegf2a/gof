@@ -1,6 +1,7 @@
 """Japanese cuisine dish implementations"""
 
-from ..dishes import MainDish, SideDish, Dessert, Drink
+from ..dishes import Dessert, Drink, MainDish, SideDish
+
 
 class Sushi(MainDish):
     """Traditional Japanese main dish"""
@@ -14,6 +15,7 @@ class Sushi(MainDish):
     def get_calories(self) -> int:
         return 320
 
+
 class Miso(SideDish):
     """Japanese side dish"""
 
@@ -26,6 +28,7 @@ class Miso(SideDish):
     def get_portion_size(self) -> str:
         return "Small bowl (150ml)"
 
+
 class Mochi(Dessert):
     """Japanese dessert"""
 
@@ -37,6 +40,7 @@ class Mochi(Dessert):
 
     def get_sweetness_level(self) -> str:
         return "Moderately sweet"
+
 
 class GreenTea(Drink):
     """Japanese traditional drink"""

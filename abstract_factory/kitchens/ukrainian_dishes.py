@@ -1,6 +1,7 @@
 """Ukrainian cuisine dish implementations"""
 
-from ..dishes import MainDish, SideDish, Dessert, Drink
+from ..dishes import Dessert, Drink, MainDish, SideDish
+
 
 class Borscht(MainDish):
     """Traditional Ukrainian main dish"""
@@ -14,6 +15,7 @@ class Borscht(MainDish):
     def get_calories(self) -> int:
         return 180
 
+
 class Varenyky(SideDish):
     """Ukrainian side dish"""
 
@@ -26,6 +28,7 @@ class Varenyky(SideDish):
     def get_portion_size(self) -> str:
         return "6 pieces"
 
+
 class Syrniki(Dessert):
     """Ukrainian dessert"""
 
@@ -37,6 +40,7 @@ class Syrniki(Dessert):
 
     def get_sweetness_level(self) -> str:
         return "Mildly sweet"
+
 
 class Kompot(Drink):
     """Traditional Ukrainian drink"""

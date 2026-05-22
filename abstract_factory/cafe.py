@@ -2,6 +2,7 @@
 
 from .factories.base import CuisineFactory
 
+
 class Cafe:
     """Client that uses abstract factory to serve meals from different cuisines"""
 
@@ -20,25 +21,25 @@ class Cafe:
         result.append("=" * 40)
 
         # Prepare main dish
-        main = meal['main_dish']
+        main = meal["main_dish"]
         result.append(f"🍖 Main Dish: {main.get_name()}")
         result.append(f"   {main.prepare()}")
         result.append(f"   Calories: {main.get_calories()}")
 
         # Prepare side dish
-        side = meal['side_dish']
+        side = meal["side_dish"]
         result.append(f"\n🥗 Side Dish: {side.get_name()}")
         result.append(f"   {side.prepare()}")
         result.append(f"   Portion: {side.get_portion_size()}")
 
         # Prepare dessert
-        dessert = meal['dessert']
+        dessert = meal["dessert"]
         result.append(f"\n🍰 Dessert: {dessert.get_name()}")
         result.append(f"   {dessert.prepare()}")
         result.append(f"   Sweetness: {dessert.get_sweetness_level()}")
 
         # Prepare drink
-        drink = meal['drink']
+        drink = meal["drink"]
         result.append(f"\n🥤 Drink: {drink.get_name()}")
         result.append(f"   {drink.prepare()}")
         result.append(f"   Temperature: {drink.get_temperature()}")
@@ -47,7 +48,7 @@ class Cafe:
 
         return "\n".join(result)
 
-    def change_kitchen(self, kitchen: CuisineFactory):
+    def change_kitchen(self, kitchen: CuisineFactory) -> None:
         """Switch to a different cuisine kitchen"""
         self.kitchen = kitchen
         self.cuisine_name = kitchen.get_cuisine_name()

@@ -3,7 +3,7 @@
 from prototype.car_factory import CarFactory
 
 
-def demonstrate_car_dealership():
+def demonstrate_car_dealership() -> None:
     """Simulate a car dealership using the prototype pattern"""
     print("🏢 Car Dealership Simulation")
     print("=" * 40)

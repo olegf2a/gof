@@ -1,19 +1,16 @@
 """Demo script for International Cafe - Abstract Factory Pattern"""
 
 from .cafe import Cafe
-from .factories import JapaneseKitchen, AmericanKitchen, UkrainianKitchen
+from .factories import AmericanKitchen, JapaneseKitchen, UkrainianKitchen
 
-def main():
+
+def main() -> None:
     """Demonstrate the Abstract Factory pattern with international cuisine"""
     print("🌍 International Cafe - Abstract Factory Pattern Demo")
     print("=" * 60)
 
     # Create different kitchen factories
-    kitchens = [
-        JapaneseKitchen(),
-        AmericanKitchen(),
-        UkrainianKitchen()
-    ]
+    kitchens = [JapaneseKitchen(), AmericanKitchen(), UkrainianKitchen()]
 
     # Create cafe instance
     cafe = Cafe(kitchens[0])  # Start with Japanese
@@ -39,7 +36,7 @@ def main():
         ("Japanese", JapaneseKitchen()),
         ("American", AmericanKitchen()),
         ("Ukrainian", UkrainianKitchen()),
-        ("Japanese", JapaneseKitchen())  # Switch back
+        ("Japanese", JapaneseKitchen()),  # Switch back
     ]
 
     for cuisine_name, kitchen in customer_requests:
@@ -47,6 +44,7 @@ def main():
         cafe.change_kitchen(kitchen)
         print(cafe.get_menu_info())
         print()
+
 
 if __name__ == "__main__":
     main()

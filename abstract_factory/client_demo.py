@@ -3,21 +3,24 @@
 Extended client demonstration of the Abstract Factory pattern
 """
 
+from typing import Optional
+
 from .cafe import Cafe
-from .factories import JapaneseKitchen, AmericanKitchen, UkrainianKitchen
+from .factories import AmericanKitchen, JapaneseKitchen, UkrainianKitchen
+
 
 class CafeManager:
     """Advanced client demonstrating different usage patterns"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.available_kitchens = {
-            'japanese': JapaneseKitchen(),
-            'american': AmericanKitchen(),
-            'ukrainian': UkrainianKitchen()
+            "japanese": JapaneseKitchen(),
+            "american": AmericanKitchen(),
+            "ukrainian": UkrainianKitchen(),
         }
-        self.current_cafe = None
+        self.current_cafe: Optional[Cafe] = None
 
-    def open_cafe(self, cuisine_type: str):
+    def open_cafe(self, cuisine_type: str) -> bool:
         """Open cafe with specific cuisine"""
         if cuisine_type.lower() in self.available_kitchens:
             kitchen = self.available_kitchens[cuisine_type.lower()]
@@ -28,7 +31,7 @@ class CafeManager:
             print(f"❌ Sorry, {cuisine_type} cuisine is not available")
             return False
 
-    def serve_customer(self, customer_name: str):
+    def serve_customer(self, customer_name: str) -> None:
         """Serve a customer with current cuisine"""
         if not self.current_cafe:
             print("❌ No cafe is currently open!")
@@ -38,7 +41,7 @@ class CafeManager:
         meal_details = self.current_cafe.serve_complete_meal()
         print(meal_details)
 
-    def change_cuisine(self, new_cuisine: str):
+    def change_cuisine(self, new_cuisine: str) -> bool:
         """Change to different cuisine"""
         if new_cuisine.lower() in self.available_kitchens:
             kitchen = self.available_kitchens[new_cuisine.lower()]
@@ -50,7 +53,7 @@ class CafeManager:
             return True
         return False
 
-    def show_available_cuisines(self):
+    def show_available_cuisines(self) -> None:
         """Display all available cuisines and their menus"""
         print("\n📋 Available Cuisines:")
         print("=" * 50)
@@ -61,7 +64,7 @@ class CafeManager:
             print("-" * 30)
             print(temp_cafe.get_menu_info())
 
-    def daily_special_demo(self):
+    def daily_special_demo(self) -> None:
         """Demonstrate daily specials from different cuisines"""
         print("\n🌟 Today's Daily Specials from Around the World!")
         print("=" * 55)
@@ -69,7 +72,7 @@ class CafeManager:
         daily_specials = [
             ("Monday Special", "japanese"),
             ("Tuesday Special", "american"),
-            ("Wednesday Special", "ukrainian")
+            ("Wednesday Special", "ukrainian"),
         ]
 
         for special_name, cuisine in daily_specials:
@@ -79,12 +82,13 @@ class CafeManager:
 
             # Show just the main dish as special
             meal = kitchen.create_complete_meal()
-            main_dish = meal['main_dish']
+            main_dish = meal["main_dish"]
             print(f"   Featured: {main_dish.get_name()}")
             print(f"   {main_dish.prepare()}")
             print(f"   Calories: {main_dish.get_calories()}")
 
-def main():
+
+def main() -> None:
     """Demonstrate advanced client usage"""
     print("🌍 International Cafe Management System")
     print("=" * 45)
@@ -117,6 +121,7 @@ def main():
 
     # Show daily specials
     manager.daily_special_demo()
+
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from .cars import Car, SEDAN_PROTOTYPE, TRUCK_PROTOTYPE, MINIVAN_PROTOTYPE
+from .cars import MINIVAN_PROTOTYPE, SEDAN_PROTOTYPE, TRUCK_PROTOTYPE, Car
 
 
 class CarFactory:
@@ -15,7 +15,9 @@ class CarFactory:
     """
 
     @staticmethod
-    def create_sedan(color: Optional[str] = None, license_plate: Optional[str] = None) -> Car:
+    def create_sedan(
+        color: Optional[str] = None, license_plate: Optional[str] = None
+    ) -> Car:
         """
         Create a sedan car with optional customizations.
 
@@ -29,7 +31,9 @@ class CarFactory:
         return SEDAN_PROTOTYPE.customize(color=color, license_plate=license_plate)
 
     @staticmethod
-    def create_truck(color: Optional[str] = None, license_plate: Optional[str] = None) -> Car:
+    def create_truck(
+        color: Optional[str] = None, license_plate: Optional[str] = None
+    ) -> Car:
         """
         Create a pickup truck with optional customizations.
 
@@ -43,7 +47,9 @@ class CarFactory:
         return TRUCK_PROTOTYPE.customize(color=color, license_plate=license_plate)
 
     @staticmethod
-    def create_minivan(color: Optional[str] = None, license_plate: Optional[str] = None) -> Car:
+    def create_minivan(
+        color: Optional[str] = None, license_plate: Optional[str] = None
+    ) -> Car:
         """
         Create a minivan with optional customizations.
 
@@ -67,7 +73,9 @@ class CarFactory:
         return ["sedan", "truck", "minivan"]
 
     @staticmethod
-    def create_car(car_type: str, color: Optional[str] = None, license_plate: Optional[str] = None) -> Car:
+    def create_car(
+        car_type: str, color: Optional[str] = None, license_plate: Optional[str] = None
+    ) -> Car:
         """
         Create a car of the specified type with optional customizations.
 
@@ -92,10 +100,12 @@ class CarFactory:
             return CarFactory.create_minivan(color, license_plate)
         else:
             available = ", ".join(CarFactory.get_available_types())
-            raise ValueError(f"Unsupported car type '{car_type}'. Available types: {available}")
+            raise ValueError(
+                f"Unsupported car type '{car_type}'. Available types: {available}"
+            )
 
     @staticmethod
-    def show_prototypes():
+    def show_prototypes() -> None:
         """Display information about all available car prototypes"""
         print("🚗 Available Car Prototypes:")
         print("=" * 50)
@@ -103,14 +113,14 @@ class CarFactory:
         prototypes = [
             ("Sedan", SEDAN_PROTOTYPE),
             ("Pickup Truck", TRUCK_PROTOTYPE),
-            ("Minivan", MINIVAN_PROTOTYPE)
+            ("Minivan", MINIVAN_PROTOTYPE),
         ]
 
         for name, prototype in prototypes:
             print(f"\n{name}:")
             specs = prototype.get_specifications()
             for key, value in specs.items():
-                if key not in ['Color', 'License Plate']:  # Skip customizable fields
+                if key not in ["Color", "License Plate"]:  # Skip customizable fields
                     print(f"  {key}: {value}")
             print(f"  Default Color: {prototype.color}")
             print(f"  Default License: {prototype.license_plate}")
