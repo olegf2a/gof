@@ -2,20 +2,24 @@
 
 import threading
 
+from .database_connection_base import DatabaseConnectionBase
 
-class DatabaseConnection:
+
+class DatabaseConnectionObjectPool(DatabaseConnectionBase):
     """
-    Limited Singleton that allows at most 10 instances.
+    Object Pool that allows at most 10 instances.
 
     Uses __new__ with a threading lock to enforce the instance cap,
     even in multi-threaded environments.
     """
 
-    _instances: list["DatabaseConnection"] = []
+    _instances: list["DatabaseConnectionObjectPool"] = []
     _lock = threading.Lock()
     _max_instances = 10
 
-    def __new__(cls, host: str = "localhost", port: int = 5432, database: str = "mydb"):
+    def __new__(
+        cls, host: str = "localhost", port: int = 5432, database: str = "mydb"
+    ) -> "DatabaseConnectionObjectPool":
         with cls._lock:
             if len(cls._instances) >= cls._max_instances:
                 raise RuntimeError(
@@ -25,15 +29,6 @@ class DatabaseConnection:
             instance = super().__new__(cls)
             cls._instances.append(instance)
             return instance
-
-    def __init__(self, host: str = "localhost", port: int = 5432, database: str = "mydb"):
-        if hasattr(self, "_initialized"):
-            return
-        self._initialized = True
-        self.host = host
-        self.port = port
-        self.database = database
-        self.is_connected = False
 
     def connect(self) -> None:
         self.is_connected = True
@@ -60,7 +55,3 @@ class DatabaseConnection:
     def reset_pool(cls) -> None:
         with cls._lock:
             cls._instances.clear()
-
-    def __str__(self) -> str:
-        status = "connected" if self.is_connected else "disconnected"
-        return f"DatabaseConnection({self.host}:{self.port}/{self.database}, {status})"

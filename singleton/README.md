@@ -72,3 +72,6 @@ Class diagram: [singleton_uml.puml](singleton_uml.puml)
 
 Sequence diagram: [singleton_flow.puml](singleton_flow.puml)
 ![flow.png](flow.png)
+
+## Useful links
+[N+1 variations of a Singleton in Python](https://dev.to/0x808080/n1-variations-of-a-singleton-in-python-3j4m)
