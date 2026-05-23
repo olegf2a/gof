@@ -1,0 +1,50 @@
+@startuml singleton_flow
+
+skinparam shadowing false
+
+actor Client
+participant "DatabaseConnection\n(class)" as DC
+participant "_instances\n(list)" as Pool
+participant "_lock\n(Lock)" as Lock
+
+== Create instance (under limit) ==
+
+Client -> DC : DatabaseConnection(host, port, db)
+activate DC
+DC -> Lock : acquire
+Lock --> DC : acquired
+DC -> Pool : len(_instances)
+Pool --> DC : count < 10
+DC -> DC : super().__new__(cls)
+DC -> Pool : _instances.append(instance)
+DC -> Lock : release
+DC --> Client : instance
+deactivate DC
+
+Client -> DC : connect()
+DC --> Client : is_connected = True
+
+== Create instance (at limit) ==
+
+Client -> DC : DatabaseConnection(host, port, db)
+activate DC
+DC -> Lock : acquire
+Lock --> DC : acquired
+DC -> Pool : len(_instances)
+Pool --> DC : count >= 10
+DC -> Lock : release
+DC --> Client : raise RuntimeError
+deactivate DC
+
+== Close instance (free slot) ==
+
+Client -> DC : close()
+activate DC
+DC -> Lock : acquire
+Lock --> DC : acquired
+DC -> Pool : _instances.remove(self)
+DC -> Lock : release
+DC --> Client : slot freed
+deactivate DC
+
+@enduml

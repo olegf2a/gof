@@ -1,0 +1,42 @@
+@startuml singleton_uml
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+class DatabaseConnection {
+    - {static} _instances: list[DatabaseConnection]
+    - {static} _lock: threading.Lock
+    - {static} _max_instances: int = 10
+    - host: str
+    - port: int
+    - database: str
+    - is_connected: bool
+    --
+    + {static} __new__(cls, host, port, database): DatabaseConnection
+    + __init__(host, port, database)
+    + connect(): void
+    + execute_query(query: str): str
+    + close(): void
+    + {static} get_instance_count(): int
+    + {static} reset_pool(): void
+}
+
+class Client
+
+Client --> DatabaseConnection : creates (max 10)
+
+note right of DatabaseConnection::__new__
+  Acquires _lock
+  If len(_instances) >= 10:
+    raise RuntimeError
+  Else:
+    create instance
+    add to _instances
+end note
+
+note bottom of DatabaseConnection
+  close() removes instance
+  from _instances, freeing a slot
+end note
+
+@enduml
