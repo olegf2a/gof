@@ -1,0 +1,80 @@
+@startuml Builder Pattern - Class Structure
+
+!define ABSTRACT class abstract
+
+package "Product" {
+    class Pizza {
+        -size: str
+        -crust: str
+        -toppings: List[str]
+        +__init__(): None
+        +add_topping(topping: str): None
+        +set_size(size: str): None
+        +set_crust(crust: str): None
+        +get_description(): str
+        +get_price(): float
+        +__str__(): str
+        +__repr__(): str
+    }
+}
+
+package "Builder" {
+    class PizzaBuilder {
+        -_pizza: Optional[Pizza]
+        +__init__(): None
+        +reset(): PizzaBuilder
+        +set_size(size: str): PizzaBuilder
+        +set_crust(crust: str): PizzaBuilder
+        +add_cheese(cheese_type: str): PizzaBuilder
+        +add_bacon(): PizzaBuilder
+        +add_pineapple(): PizzaBuilder
+        +add_mushrooms(mushroom_type: str): PizzaBuilder
+        +add_seafood(seafood_type: str): PizzaBuilder
+        +add_pepperoni(): PizzaBuilder
+        +add_vegetables(vegetable: str): PizzaBuilder
+        +add_custom_topping(topping: str): PizzaBuilder
+        +build(): Pizza
+        +get_current_pizza_info(): str
+    }
+}
+
+package "Client" {
+    class ClientCode {
+        +main(): None
+        +interactive_demo(): None
+    }
+}
+
+PizzaBuilder --> Pizza : builds
+ClientCode ..> PizzaBuilder : uses
+ClientCode ..> Pizza : receives
+
+note right of PizzaBuilder::build
+  Build Method Inside Builder:
+  - Returns the constructed Pizza
+  - Resets builder for next use
+  - Core method of Builder pattern
+end note
+
+note left of PizzaBuilder
+  Fluent Interface:
+  - Each method returns self
+  - Enables method chaining
+  - Makes code readable
+
+  Required Toppings:
+  - Cheese
+  - Bacon
+  - Pineapple
+  - Mushrooms
+  - Seafood
+end note
+
+note bottom of Pizza
+  Product Class:
+  - Stores pizza configuration
+  - Calculates price based on size/toppings
+  - Provides description formatting
+end note
+
+@enduml

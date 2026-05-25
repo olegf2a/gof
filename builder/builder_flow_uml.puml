@@ -1,0 +1,100 @@
+@startuml Builder Pattern - Flow Sequence
+
+actor Client
+participant PizzaBuilder as Builder
+participant Pizza
+
+== Pizza Construction Flow ==
+
+Client -> Builder : new PizzaBuilder()
+activate Builder
+Builder -> Builder : reset()
+Builder -> Pizza : new Pizza()
+activate Pizza
+Pizza --> Builder : pizza instance
+Builder --> Client : builder instance
+
+note right of Builder
+  Builder initialized with
+  fresh Pizza instance
+end note
+
+== Configuration Phase ==
+
+Client -> Builder : set_size("large")
+Builder -> Pizza : set_size("large")
+Pizza --> Builder :
+Builder --> Client : self (for chaining)
+
+Client -> Builder : set_crust("thin")
+Builder -> Pizza : set_crust("thin")
+Pizza --> Builder :
+Builder --> Client : self (for chaining)
+
+== Adding Toppings (Required from Task) ==
+
+Client -> Builder : add_cheese("mozzarella")
+Builder -> Pizza : add_topping("mozzarella cheese")
+Pizza --> Builder :
+Builder --> Client : self (for chaining)
+
+Client -> Builder : add_bacon()
+Builder -> Pizza : add_topping("bacon")
+Pizza --> Builder :
+Builder --> Client : self (for chaining)
+
+Client -> Builder : add_pineapple()
+Builder -> Pizza : add_topping("pineapple")
+Pizza --> Builder :
+Builder --> Client : self (for chaining)
+
+Client -> Builder : add_mushrooms("shiitake")
+Builder -> Pizza : add_topping("shiitake")
+Pizza --> Builder :
+Builder --> Client : self (for chaining)
+
+Client -> Builder : add_seafood("shrimp")
+Builder -> Pizza : add_topping("shrimp")
+Pizza --> Builder :
+Builder --> Client : self (for chaining)
+
+note over Client, Pizza
+  Method chaining allows fluent interface:
+  builder.set_size("large")
+         .add_cheese("mozzarella")
+         .add_bacon()
+         .add_pineapple()
+         .build()
+end note
+
+== Build Phase ==
+
+Client -> Builder : build()
+Builder -> Builder : get current pizza
+Builder -> Pizza : (return reference)
+Pizza --> Builder : pizza instance
+Builder -> Builder : reset() for next use
+Builder -> Pizza : new Pizza()
+activate Pizza #lightblue
+Pizza --> Builder : new pizza instance
+Builder --> Client : completed pizza
+deactivate Pizza
+
+note right of Client
+  Client receives fully
+  configured Pizza object
+  ready for use
+end note
+
+== Usage ==
+
+Client -> Pizza : get_description()
+Pizza --> Client : "Large thin crust pizza with: mozzarella cheese, bacon, pineapple, shiitake, shrimp"
+
+Client -> Pizza : get_price()
+Pizza --> Client : calculated price
+
+deactivate Pizza
+deactivate Builder
+
+@enduml
