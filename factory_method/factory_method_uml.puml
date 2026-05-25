@@ -1,0 +1,90 @@
+@startuml Factory Method Pattern
+
+!define ABSTRACT class abstract
+!define INTERFACE interface
+
+package "Products" {
+    class Dish {
+        +name: str
+        +cooking_temp: int
+        +cooking_time: int
+        +prepare(): str
+        +get_cooking_temp(): int
+        +get_cooking_time(): int
+    }
+
+    class Pizza {
+        +name = "Margherita Pizza"
+        +cooking_temp = 450
+        +cooking_time = 12
+        +prepare(): str
+    }
+
+    class Lasagna {
+        +name = "Classic Lasagna"
+        +cooking_temp = 375
+        +cooking_time = 45
+        +prepare(): str
+    }
+
+    class Cookies {
+        +name = "Chocolate Chip Cookies"
+        +cooking_temp = 350
+        +cooking_time = 10
+        +prepare(): str
+    }
+}
+
+package "Creator" {
+    class Oven {
+        -dish_map: dict[str, DishType]
+        +cook_dish(dish_type: str): str
+        -_create_dish(dish_type: str): Dish
+    }
+}
+
+Dish <|-- Pizza
+Dish <|-- Lasagna
+Dish <|-- Cookies
+
+Oven ..> Dish : creates
+Oven ..> Pizza : creates
+Oven ..> Lasagna : creates
+Oven ..> Cookies : creates
+
+note right of Oven::_create_dish
+  Factory Method:
+  Creates appropriate dish
+  based on dish_type parameter
+
+  Implementation:
+  dish_map = {
+    "pizza": Pizza,
+    "lasagna": Lasagna,
+    "cookies": Cookies
+  }
+  return dish_map[dish_type]()
+end note
+
+note left of Oven::cook_dish
+  Template Method:
+  1. Create dish via factory method
+  2. Get preparation steps
+  3. Get cooking parameters
+  4. Return formatted cooking instructions
+end note
+
+note top of Dish
+  Abstract Product
+  Defines interface for all dishes
+  with cooking properties and methods
+end note
+
+note bottom of Pizza
+  Concrete Product
+  Specific implementation
+  for pizza with unique
+  cooking characteristics
+end note
+
+@enduml
