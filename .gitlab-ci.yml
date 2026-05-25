@@ -1,8 +1,9 @@
 # .gitlab-ci.yml
-# Runs pre-commit hooks on every push and merge request.
+# Runs pre-commit hooks and pattern tests on merge request.
 
 stages:
   - lint
+  - test
 
 pre-commit:
   stage: lint
@@ -21,4 +22,51 @@ pre-commit:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_COMMIT_TAG
+
+tests:
+  stage: test
+  image: python:3.11
+  script:
+    - |
+      echo "🧪 Running tests for all design patterns..."
+
+      total_tests=0
+      failed_patterns=""
+
+      # Check each directory for tests
+      for dir in */; do
+        if [ -d "${dir}tests" ]; then
+          pattern_name=${dir%/}
+          echo "🔍 Testing $pattern_name pattern..."
+
+          # Run all test modules in pattern_name/tests/
+          for test_file in ${dir}tests/test_*.py; do
+            if [ -f "$test_file" ]; then
+              # Convert path to module: pattern/tests/test_file.py -> pattern.tests.test_file
+              module=$(echo "$test_file" | sed 's|/|.|g' | sed 's|\.py$||')
+
+              if python -m "$module" >/dev/null 2>&1; then
+                test_count=$(python -m "$module" 2>&1 | grep -o "Ran [0-9]* tests" | grep -o "[0-9]*" || echo "1")
+                echo "   ✅ $test_count tests passed"
+                total_tests=$((total_tests + test_count))
+              else
+                echo "   ❌ Tests failed"
+                failed_patterns="$failed_patterns $pattern_name"
+              fi
+            fi
+          done
+        fi
+      done
+
+      echo ""
+      echo "📊 Total: $total_tests tests"
+
+      if [ -n "$failed_patterns" ]; then
+        echo "❌ Failed:$failed_patterns"
+        exit 1
+      else
+        echo "✅ All tests passed!"
+      fi
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
