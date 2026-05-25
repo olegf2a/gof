@@ -1,0 +1,59 @@
+@startuml Adapter_Pattern
+
+title Adapter Pattern - Weather Service
+
+' ─── Target interface ───
+abstract class Weather {
+  +{abstract} get_temperature(): float
+  +{abstract} get_humidity(): int
+  +{abstract} get_city(): str
+}
+
+' ─── Adaptee ───
+class PogodaPL {
+  -_miasto: str
+  -_dane: dict
+  +__init__(miasto: str)
+  +pobierz_temperatura(): float
+  +pobierz_wilgotnosc(): int
+  +pobierz_miasto(): str
+}
+
+' ─── Adapter ───
+class WeatherAdapterPl {
+  -_service: PogodaPL
+  +__init__(city: str)
+  +get_temperature(): float
+  +get_humidity(): int
+  +get_city(): str
+}
+
+' ─── Client ───
+class Client {
+  +use_weather(service: Weather)
+}
+
+' ─── Relationships ───
+Weather <|-- WeatherAdapterPl : implements
+WeatherAdapterPl *-- PogodaPL : owns
+Client --> Weather : depends on
+
+note right of PogodaPL
+  Adaptee:
+  Third-party Polish API
+  with non-English interface
+end note
+
+note right of WeatherAdapterPl
+  Adapter:
+  Translates English calls
+  to Polish method names
+end note
+
+note left of Weather
+  Target:
+  English interface
+  the client expects
+end note
+
+@enduml
