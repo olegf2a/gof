@@ -59,13 +59,14 @@ adapter/
 ## Usage
 
 ### As a module:
+
 ```python
-from adapter import WeatherAdapterPl, Weather
+from structural.adapter import WeatherAdapterPl, Weather
 
 service: Weather = WeatherAdapterPl("warsaw")
-print(service.get_temperature())   # 21.5
-print(service.get_humidity())      # 73
-print(service.get_city())          # warsaw
+print(service.get_temperature())  # 21.5
+print(service.get_humidity())  # 73
+print(service.get_city())  # warsaw
 ```
 
 ### Run the demo:
