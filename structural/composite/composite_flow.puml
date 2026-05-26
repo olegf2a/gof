@@ -1,0 +1,40 @@
+@startuml Composite_Flow
+
+title Composite Pattern — Call Flow
+
+participant Client
+participant "root\n(Node)" as Root
+participant "node_a\n(Node)" as NodeA
+participant "node_b\n(Node)" as NodeB
+participant "leaf1\n(Leaf)" as Leaf1
+participant "leaf2\n(Leaf)" as Leaf2
+participant "leaf3\n(Leaf)" as Leaf3
+
+== root.increment() ==
+Client -> Root : increment()
+Root -> Root : _value += 1
+Root -> NodeA : increment()
+NodeA -> NodeA : _value += 1
+NodeA -> Leaf1 : increment()
+Leaf1 -> Leaf1 : _value += 1
+NodeA -> Leaf2 : increment()
+Leaf2 -> Leaf2 : _value += 1
+Root -> NodeB : increment()
+NodeB -> NodeB : _value += 1
+NodeB -> Leaf3 : increment()
+Leaf3 -> Leaf3 : _value += 1
+
+== node_a.decrement() ==
+Client -> NodeA : decrement()
+NodeA -> NodeA : _value -= 1
+NodeA -> Leaf1 : decrement()
+Leaf1 -> Leaf1 : _value -= 1
+NodeA -> Leaf2 : decrement()
+Leaf2 -> Leaf2 : _value -= 1
+
+note over NodeB, Leaf3
+  node_b and leaf3 unaffected —
+  client targets only the subtree it needs.
+end note
+
+@enduml
