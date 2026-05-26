@@ -45,12 +45,18 @@ tests:
               # Convert path to module: pattern/tests/test_file.py -> pattern.tests.test_file
               module=$(echo "$test_file" | sed 's|/|.|g' | sed 's|\.py$||')
 
-              if python -m "$module" >/dev/null 2>&1; then
-                test_count=$(python -m "$module" 2>&1 | grep -o "Ran [0-9]* tests" | grep -o "[0-9]*" || echo "1")
-                echo "   ✅ $test_count tests passed"
+              output=$(python -m "$module" -v 2>&1)
+              exit_code=$?
+
+              if [ $exit_code -eq 0 ]; then
+                test_count=$(echo "$output" | grep -o "Ran [0-9]* test" | grep -o "[0-9]*" || echo "1")
+                echo "   ✅ $test_count tests passed ($module)"
                 total_tests=$((total_tests + test_count))
               else
-                echo "   ❌ Tests failed"
+                echo "   ❌ Tests failed ($module)"
+                echo "$output" | grep -E "(FAIL|ERROR|Traceback|ModuleNotFoundError|ImportError|AssertionError)" | sed 's/^/      /'
+                echo "   --- Full output ---"
+                echo "$output" | sed 's/^/      /'
                 failed_patterns="$failed_patterns $pattern_name"
               fi
             fi
