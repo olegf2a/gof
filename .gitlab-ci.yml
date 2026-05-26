@@ -34,7 +34,7 @@ tests:
       failed_patterns=""
 
       # Check each directory for tests
-      for dir in */; do
+      for dir in */*/; do
         if [ -d "${dir}tests" ]; then
           pattern_name=${dir%/}
           echo "🔍 Testing $pattern_name pattern..."

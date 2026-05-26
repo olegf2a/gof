@@ -1,6 +1,6 @@
 """Client demonstration of the Car Prototype pattern"""
 
-from prototype.car_factory import CarFactory
+from creational.prototype import CarFactory
 
 
 def demonstrate_car_dealership() -> None:

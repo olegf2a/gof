@@ -43,7 +43,7 @@ singleton/
 ## Usage
 
 ```python
-from singleton import DatabaseConnection
+from creational.singleton import DatabaseConnection
 
 db = DatabaseConnection("localhost", 5432, "app_db")
 db.connect()

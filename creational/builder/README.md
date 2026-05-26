@@ -79,17 +79,18 @@ builder/
 ## Usage
 
 ### As a module:
+
 ```python
-from builder import PizzaBuilder
+from creational.builder import PizzaBuilder
 
 # Create a Hawaiian pizza
 hawaiian = (PizzaBuilder()
-    .set_size("large")
-    .set_crust("thin")
-    .add_cheese("mozzarella")
-    .add_bacon()
-    .add_pineapple()
-    .build())
+            .set_size("large")
+            .set_crust("thin")
+            .add_cheese("mozzarella")
+            .add_bacon()
+            .add_pineapple()
+            .build())
 
 print(hawaiian)  # Large thin crust pizza with: mozzarella cheese, bacon, pineapple
 print(f"Price: ${hawaiian.get_price():.2f}")  # Price: $21.49

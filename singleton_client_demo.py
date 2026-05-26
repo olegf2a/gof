@@ -1,6 +1,6 @@
 """Client demonstration of the Limited Singleton pattern"""
 
-from singleton import DatabaseConnectionObjectPool
+from creational.singleton import DatabaseConnectionObjectPool
 
 
 def main() -> None:

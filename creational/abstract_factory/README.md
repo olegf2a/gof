@@ -74,8 +74,9 @@ abstract_factory/
 ## Usage
 
 ### As a module:
+
 ```python
-from abstract_factory import Cafe, JapaneseKitchen
+from creational.abstract_factory import Cafe, JapaneseKitchen
 
 # Create cafe with Japanese cuisine
 cafe = Cafe(JapaneseKitchen())
@@ -83,7 +84,8 @@ meal = cafe.serve_complete_meal()
 print(meal)
 
 # Switch to different cuisine
-from abstract_factory import AmericanKitchen
+from creational.abstract_factory import AmericanKitchen
+
 cafe.change_kitchen(AmericanKitchen())
 ```
 

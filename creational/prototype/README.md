@@ -73,8 +73,9 @@ prototype/
 ## Usage
 
 ### As a module:
+
 ```python
-from prototype import CarFactory
+from creational.prototype import CarFactory
 
 # Create different car types with customizations
 sedan = CarFactory.create_sedan(color="Red", license_plate="FAST-01")

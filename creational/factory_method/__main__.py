@@ -1,6 +1,6 @@
 """Demo script for factory_method module"""
 
-from factory_method.oven import Oven
+from creational.factory_method.oven import Oven
 
 
 def main() -> None:

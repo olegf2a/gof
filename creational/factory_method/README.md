@@ -71,8 +71,9 @@ factory_method/
 ## Usage
 
 ### As a module:
+
 ```python
-from factory_method import Oven
+from creational.factory_method import Oven
 
 # Create oven and cook different dishes
 oven = Oven()
