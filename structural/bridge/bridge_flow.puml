@@ -1,0 +1,25 @@
+@startuml Bridge_Flow
+
+title Bridge Pattern — Call Flow
+
+participant Client
+participant "FirstCourse\n(Dish)" as Dish
+participant "Italian\n(Cuisine)" as Cuisine
+
+Client -> Dish : FirstCourse(Italian())
+Client -> Dish : serve()
+Dish -> Cuisine : get_name()
+Cuisine --> Dish : "Italian"
+Dish -> Cuisine : prepare_first()
+Cuisine --> Dish : "Minestrone soup"
+Dish --> Client : "[Italian] Minestrone soup"
+
+Client -> Dish : get_course_name()
+Dish --> Client : "First Course"
+
+note over Client, Cuisine
+  Client can swap Cuisine (Italian → Japanese)
+  without changing Dish class — and vice versa.
+end note
+
+@enduml
