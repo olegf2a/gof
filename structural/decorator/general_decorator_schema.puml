@@ -1,0 +1,55 @@
+@startuml General_Decorator_Pattern
+
+title Decorator Pattern - General Structure
+
+abstract class Component {
+  +{abstract} operation(): result
+}
+
+class ConcreteComponent {
+  +operation(): result
+}
+
+abstract class Decorator {
+  -_component: Component
+  +__init__(component: Component)
+  +operation(): result
+}
+
+class ConcreteDecoratorA {
+  +operation(): result
+}
+
+class ConcreteDecoratorB {
+  +operation(): result
+}
+
+Component        <|-- ConcreteComponent
+Component        <|-- Decorator
+Decorator        <|-- ConcreteDecoratorA
+Decorator        <|-- ConcreteDecoratorB
+Decorator         o-- Component : wraps
+
+note right of Decorator
+  Delegates to _component.operation()
+  then adds extra behaviour.
+end note
+
+note right of ConcreteDecoratorA
+  result = super().operation()
+  + extra behaviour A
+end note
+
+note left of Component
+  Common interface for both
+  the real object and
+  all its decorators.
+end note
+
+legend bottom right
+  |= Symbol |= Type        |= Meaning                              |
+  | <|--    | Inheritance  | "is-a": implements Component          |
+  | o--     | Aggregation  | "wraps": holds a Component reference  |
+endlegend
+
+@enduml
