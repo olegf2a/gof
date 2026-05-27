@@ -1,7 +1,7 @@
 # Decorator Pattern
 
 An implementation of the Decorator design pattern that builds a custom pizza by wrapping a base pizza with topping decorators at runtime.
-![general_decorator_schema_uml.png](general_decorator_schema_uml.png)
+![uml/general_decorator_schema_uml.png](uml/general_decorator_schema_uml.png)
 ## Problem and Solution
 
 ### The Problem
@@ -57,8 +57,8 @@ structural/decorator/
 │   ├── pineapple.py         ← Pineapple  (+$1.00)
 │   ├── mushroom.py          ← Mushroom   (+$1.50)
 │   └── seafood.py           ← Seafood    (+$2.50)
-├── decorator_schema.puml    ← Structural class diagram
-├── decorator_flow.puml      ← Sequence / call flow diagram
+├── uml/decorator_schema.puml    ← Structural class diagram
+├── uml/decorator_flow.puml      ← Sequence / call flow diagram
 └── tests/
     └── test_decorator.py
 ```
@@ -117,6 +117,6 @@ Wraps a `Pizza` and uses Template Method to compose result:
 
 ## Diagrams
 
-- **`decorator_schema.puml`** — structural class diagram: Component, Decorator, and topping relationships
-![general_decorator_schema_uml.png](general_decorator_schema_uml.png)
-- **`decorator_flow.puml`** — sequence diagram: call chain through wrapped decorators
+- **`uml/decorator_schema.puml`** — structural class diagram: Component, Decorator, and topping relationships
+![uml/general_decorator_schema_uml.png](uml/general_decorator_schema_uml.png)
+- **`uml/decorator_flow.puml`** — sequence diagram: call chain through wrapped decorators
