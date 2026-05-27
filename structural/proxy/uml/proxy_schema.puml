@@ -1,0 +1,62 @@
+@startuml proxy_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+
+package "structural/facade" {
+  abstract class Calculator {
+    + add(a: int, b: int) : int  {abstract}
+    + subtract(a: int, b: int) : int  {abstract}
+    + multiply(a: int, b: int) : int  {abstract}
+    + divide(a: int, b: int) : int  {abstract}
+  }
+
+  class CalculatorFacade {
+    - _client  : SoapClient
+    - _builder : RequestBuilder
+    - _parser  : ResponseParser
+    + add(a: int, b: int) : int
+    + subtract(a: int, b: int) : int
+    + multiply(a: int, b: int) : int
+    + divide(a: int, b: int) : int
+  }
+
+  Calculator <|-- CalculatorFacade : implements
+}
+
+package "structural/proxy" {
+  class CachingCalculatorProxy {
+    - _subject : Calculator
+    - _cache   : dict[tuple[str, int, int], int]
+    + add(a: int, b: int) : int
+    + subtract(a: int, b: int) : int
+    + multiply(a: int, b: int) : int
+    + divide(a: int, b: int) : int
+  }
+
+  Calculator <|-- CachingCalculatorProxy : implements
+}
+
+CachingCalculatorProxy o-- Calculator : wraps
+
+note right of CachingCalculatorProxy
+  Cache key: (operation, a, b)
+  Hit  → return cached result
+  Miss → forward to _subject,
+         store result, return
+end note
+
+note bottom of Calculator
+  Shared interface — client uses
+  Calculator, unaware whether it
+  talks to proxy or facade.
+end note
+
+legend right
+  <|--  inheritance / implementation
+  o--   aggregation (wraps)
+end legend
+
+@enduml

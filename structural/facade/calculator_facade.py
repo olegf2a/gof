@@ -1,9 +1,10 @@
+from .calculator import Calculator
 from .soap.client import SoapClient
 from .soap.request_builder import RequestBuilder
 from .soap.response_parser import ResponseParser
 
 
-class CalculatorFacade:
+class CalculatorFacade(Calculator):
     def __init__(self) -> None:
         self._client = SoapClient()
         self._builder = RequestBuilder()
