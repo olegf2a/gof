@@ -1,0 +1,49 @@
+@startuml facade_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+
+package "Facade" {
+  class CalculatorFacade {
+    - _client : SoapClient
+    - _builder : RequestBuilder
+    - _parser : ResponseParser
+    + add(a: int, b: int) : int
+    + subtract(a: int, b: int) : int
+    + multiply(a: int, b: int) : int
+    + divide(a: int, b: int) : int
+    - _call(operation: str, a: int, b: int) : int
+  }
+}
+
+package "Subsystems (soap/)" {
+  class RequestBuilder {
+    + build(operation: str, a: int, b: int) : str
+  }
+
+  class SoapClient {
+    + call(envelope: str, action: str) : str
+  }
+
+  class ResponseParser {
+    + parse(operation: str, xml: str) : int
+  }
+}
+
+CalculatorFacade *-- SoapClient     : uses
+CalculatorFacade *-- RequestBuilder : uses
+CalculatorFacade *-- ResponseParser : uses
+
+note bottom of CalculatorFacade
+  Hides all SOAP details from client.
+  Client only calls add / subtract /
+  multiply / divide.
+end note
+
+legend right
+  *-- composition
+end legend
+
+@enduml

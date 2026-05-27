@@ -1,0 +1,63 @@
+FACADE PATTERN — SOAP Calculator
+══════════════════════════════════════════════════════════════
+
+  TASK: Hide the complexity of a SOAP web service behind
+        a simple Python interface.
+        Service: http://www.dneonline.com/calculator.asmx
+
+  WITHOUT FACADE (client must know SOAP details):
+  ─────────────────────────────────────────────────
+  envelope = f"""<?xml version="1.0"?>
+    <soap:Envelope xmlns:soap="...">
+      <soap:Body>
+        <Add xmlns="...">
+          <intA>5</intA><intB>3</intB>
+        </Add>
+      </soap:Body>
+    </soap:Envelope>"""
+  response = requests.post(url, data=envelope, headers=...)
+  tree = ET.fromstring(response.text)
+  result = int(tree.find(".//{...}AddResult").text)
+
+  WITH FACADE (client sees only this):
+  ──────────────────────────────────────
+  calc = CalculatorFacade()
+  calc.add(5, 3)        → 8
+  calc.subtract(10, 4)  → 6
+  calc.multiply(3, 7)   → 21
+  calc.divide(20, 4)    → 5
+
+  SUBSYSTEMS (hidden by facade)        FACADE
+  ─────────────────────────────        ──────────────────────
+  RequestBuilder                       CalculatorFacade
+  + build(operation, a, b) -> str        - _client: SoapClient
+    → builds SOAP XML envelope           - _builder: RequestBuilder
+                                         - _parser: ResponseParser
+  SoapClient                             + add(a, b) -> int
+  + call(envelope) -> str                + subtract(a, b) -> int
+    → HTTP POST to service URL           + multiply(a, b) -> int
+    → returns raw XML response           + divide(a, b) -> int
+
+  ResponseParser
+  + parse(operation, xml) -> int
+    → extracts result from XML
+
+  Call flow:
+    Client → CalculatorFacade.add(5, 3)
+               → RequestBuilder.build("Add", 5, 3)   → XML envelope
+               → SoapClient.call(envelope)            → raw XML
+               → ResponseParser.parse("Add", xml)    → 8
+               → return 8
+
+FILE STRUCTURE:
+  structural/facade/
+  ├── __init__.py
+  ├── __main__.py              ← demo
+  ├── calculator_facade.py     ← CalculatorFacade (public interface)
+  ├── soap/
+  │   ├── __init__.py
+  │   ├── client.py            ← SoapClient (HTTP POST)
+  │   ├── request_builder.py   ← builds SOAP XML envelope
+  │   └── response_parser.py   ← parses XML response → int
+  └── tests/
+      └── test_facade.py
