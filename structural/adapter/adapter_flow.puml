@@ -1,0 +1,24 @@
+@startuml Adapter_Sequence
+
+title Adapter Pattern — Call Flow
+
+participant Client
+participant WeatherAdapterPl as Adapter
+participant PogodaPL as Adaptee
+
+Client -> Adapter : get_temperature()
+Adapter -> Adaptee : pobierz_temperatura()
+Adaptee --> Adapter : 21.5
+Adapter --> Client : 21.5
+
+Client -> Adapter : get_humidity()
+Adapter -> Adaptee : pobierz_wilgotnosc()
+Adaptee --> Adapter : 73
+Adapter --> Client : 73
+
+Client -> Adapter : get_city()
+Adapter -> Adaptee : pobierz_miasto()
+Adaptee --> Adapter : "warsaw"
+Adapter --> Client : "warsaw"
+
+@enduml
