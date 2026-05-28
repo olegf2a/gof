@@ -1,0 +1,68 @@
+@startuml Composite_Pattern
+
+title Composite Pattern - Integer Tree
+
+' ─── Component ───
+abstract class TreeElement {
+  +{abstract} get_value(): int
+  +{abstract} get_children(): List[TreeElement]
+  +{abstract} increment(): int
+  +{abstract} decrement(): int
+}
+
+' ─── Leaf ───
+class Leaf {
+  -_value: int
+  +__init__(value: int)
+  +get_value(): int
+  +get_children(): List
+  +increment(): int
+  +decrement(): int
+}
+
+' ─── Composite ───
+class Node {
+  -_value: int
+  -_children: List[TreeElement]
+  +__init__(value: int, children: List)
+  +get_value(): int
+  +get_children(): List[TreeElement]
+  +increment(): int
+  +decrement(): int
+}
+
+' ─── Relationships ───
+TreeElement <|-- Leaf
+TreeElement <|-- Node
+Node o-- TreeElement : contains
+
+note right of Leaf
+  Leaf:
+  Holds integer value.
+  increment/decrement
+  change it directly.
+end note
+
+note right of Node
+  Composite:
+  Propagates increment/decrement
+  to all children recursively.
+  get_value() = own + sum(children)
+end note
+
+note left of TreeElement
+  Component:
+  Uniform interface for
+  both Leaf and Node —
+  client treats them the same.
+end note
+
+legend bottom right
+  <b>Legend</b>
+  |= Symbol  |= Type        |= Meaning                              |
+  | <|--     | Inheritance  | "is-a": subclass implements interface |
+  | o--      | Aggregation  | "has-many": Node holds TreeElements,  |
+  |          |              | children can exist without the parent |
+endlegend
+
+@enduml

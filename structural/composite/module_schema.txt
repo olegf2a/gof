@@ -1,0 +1,46 @@
+COMPOSITE PATTERN — Integer Tree
+══════════════════════════════════════════════════════════════
+
+  TASK: Tree of objects where increment/decrement propagates
+        down to all underlying elements.
+
+  COMPONENT (abstract)         LEAF                  COMPOSITE
+  ────────────────────         ────────────────────  ─────────────────────
+  TreeElement                  Leaf(TreeElement)     Node(TreeElement)
+  + get_value() -> int           - _value: int         - _children: list
+  + increment() -> None          + increment()         + add(child)
+  + decrement() -> None          + decrement()         + remove(child)
+  + get_children() -> list       + get_value()         + get_children()
+                                 + get_children()      + increment()
+                                   → returns []          → calls increment()
+                                                           on all children
+                                                         + decrement()
+                                                           → calls decrement()
+                                                           on all children
+                                                         + get_value()
+                                                           → sum of children
+
+  Example tree:
+                    Node (root)
+                   /           \
+               Node (A)       Node (B)
+              /     \              \
+          Leaf(1)  Leaf(2)        Leaf(3)
+
+  root.increment()  →  all leaves: 1→2, 2→3, 3→4
+  root.decrement()  →  all leaves: 2→1, 3→2, 4→3
+  A.increment()     →  only A's leaves: 1→2, 2→3  (B unchanged)
+
+  Why Composite:
+  Client calls increment()/decrement() on any node or leaf
+  using the same interface — no need to know the tree depth.
+
+FILE STRUCTURE:
+  structural/composite/
+  ├── __init__.py
+  ├── __main__.py          ← demo: build tree, increment, decrement
+  ├── base.py              ← TreeElement (ABC)
+  ├── leaf.py              ← Leaf (holds integer value)
+  ├── node.py              ← Node (composite, holds children)
+  └── tests/
+      └── test_composite.py
