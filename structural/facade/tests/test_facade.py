@@ -1,9 +1,10 @@
 """Unit tests for Facade pattern — SOAP Calculator"""
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from ..calculator_facade import CalculatorFacade
+from ..service.service import Service
 from ..soap.request_builder import RequestBuilder
 from ..soap.response_parser import ResponseParser
 
@@ -77,39 +78,31 @@ class TestResponseParser(unittest.TestCase):
 class TestCalculatorFacade(unittest.TestCase):
 
     def setUp(self) -> None:
-        with patch("structural.facade.calculator_facade.SoapClient"):
-            self.facade = CalculatorFacade()
-        self.facade._client = MagicMock()
-
-    def _mock_response(self, operation: str, value: int) -> None:
-        self.facade._client.call.return_value = _make_response_xml(operation, value)  # type: ignore
+        self.service = MagicMock(spec=Service)
+        self.facade = CalculatorFacade(service=self.service)
 
     def test_add(self) -> None:
-        self._mock_response("Add", 8)
+        self.service.calculate.return_value = 8
         self.assertEqual(self.facade.add(5, 3), 8)
+        self.service.calculate.assert_called_once_with("Add", 5, 3)
 
     def test_subtract(self) -> None:
-        self._mock_response("Subtract", 6)
+        self.service.calculate.return_value = 6
         self.assertEqual(self.facade.subtract(10, 4), 6)
+        self.service.calculate.assert_called_once_with("Subtract", 10, 4)
 
     def test_multiply(self) -> None:
-        self._mock_response("Multiply", 21)
+        self.service.calculate.return_value = 21
         self.assertEqual(self.facade.multiply(3, 7), 21)
+        self.service.calculate.assert_called_once_with("Multiply", 3, 7)
 
     def test_divide(self) -> None:
-        self._mock_response("Divide", 5)
+        self.service.calculate.return_value = 5
         self.assertEqual(self.facade.divide(20, 4), 5)
-
-    def test_add_calls_client_with_envelope(self) -> None:
-        self._mock_response("Add", 8)
-        self.facade.add(5, 3)
-        self.facade._client.call.assert_called_once()  # type: ignore
-        envelope = self.facade._client.call.call_args[0][0]  # type: ignore
-        self.assertIn("<intA>5</intA>", envelope)
-        self.assertIn("<intB>3</intB>", envelope)
+        self.service.calculate.assert_called_once_with("Divide", 20, 4)
 
     def test_hides_soap_complexity(self) -> None:
-        self._mock_response("Multiply", 12)
+        self.service.calculate.return_value = 12
         result = self.facade.multiply(3, 4)
         self.assertIsInstance(result, int)
         self.assertEqual(result, 12)

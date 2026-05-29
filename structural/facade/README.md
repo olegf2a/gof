@@ -1,7 +1,7 @@
 # Facade Pattern
 
 An implementation of the Facade design pattern that hides the complexity of a SOAP web service behind a simple Python interface.
-
+![facade_general_uml.png](uml/facade_general_uml.png)
 ## Problem and Solution
 
 ### The Problem
@@ -9,7 +9,7 @@ Calling a SOAP web service requires the client to know low-level details: XML en
 
 ```python
 # Without Facade — client must know all SOAP details:
-ns = "http://www.dneonline.com/calculator.asmx"
+ns = "http://tempuri.org/"
 envelope = f"""<?xml version="1.0"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -18,18 +18,18 @@ envelope = f"""<?xml version="1.0"?>
     </Add>
   </soap:Body>
 </soap:Envelope>"""
-headers = {"Content-Type": "text/xml", "SOAPAction": f'"{ns}/Add"'}
-response = requests.post(url, data=envelope, headers=headers)
-tree = ET.fromstring(response.text)
+headers = {"Content-Type": "text/xml", "SOAPAction": f'"{ns}Add"'}
+conn.request("POST", "/calculator.asmx", body=envelope, headers=headers)
+tree = ET.fromstring(conn.getresponse().read())
 result = int(tree.find(f".//{{{ns}}}AddResult").text)
 ```
 
 ### The Solution
-The Facade wraps three subsystems and exposes only four clean methods:
+The Facade wraps all layers and exposes only four clean methods:
 
 ```python
 # With Facade — client sees only this:
-calc = CalculatorFacade()
+calc = CalculatorFacade(service=SoapService(...))
 calc.add(5, 3)        # → 8
 calc.subtract(10, 4)  # → 6
 calc.multiply(3, 7)   # → 21
@@ -38,25 +38,34 @@ calc.divide(20, 4)    # → 5
 
 ## Pattern Overview
 
-- **Facade** (`CalculatorFacade`): single entry point — coordinates all subsystems
-- **RequestBuilder**: builds SOAP XML envelopes for each operation
-- **SoapClient**: sends HTTP POST requests and returns raw XML
-- **ResponseParser**: extracts the integer result from XML
+- **Calculator** (`calculator.py`): shared ABC — client depends on this interface only
+- **CalculatorFacade** (`calculator_facade.py`): the facade — four simple methods, delegates to `Service`
+- **Service / SoapService** (`service/`): orchestrates build → transport → parse pipeline
+- **Transport / HttpClient** (`transport/`): sends HTTP POST, returns raw XML
+- **RequestBuilder** (`soap/request_builder.py`): builds SOAP XML envelopes
+- **ResponseParser** (`soap/response_parser.py`): extracts integer result from XML
+- **config.py**: `SERVICE_HOST`, `SERVICE_PATH`, `SOAP_ACTION_NS` — wired in `__main__.py`
 
 ## Structure
 
 ```
 structural/facade/
 ├── __init__.py
-├── __main__.py              ← demo
-├── calculator_facade.py     ← CalculatorFacade (public interface)
-├── requirements.txt         ← requests>=2.28.0
+├── __main__.py              ← demo + object wiring
+├── calculator.py            ← Calculator ABC (shared interface)
+├── calculator_facade.py     ← CalculatorFacade
+├── config.py                ← SERVICE_HOST, SERVICE_PATH, SOAP_ACTION_NS
+├── service/
+│   ├── service.py           ← Service ABC
+│   └── soap.py              ← SoapService (build → transport → parse)
 ├── soap/
-│   ├── __init__.py
-│   ├── client.py            ← SoapClient (HTTP POST)
 │   ├── request_builder.py   ← builds SOAP XML envelope
 │   └── response_parser.py   ← parses XML response → int
+├── transport/
+│   ├── transport.py         ← Transport ABC
+│   └── http_client.py       ← HttpClient (HTTP POST via stdlib http.client)
 ├── uml/
+│   ├── facade_general.puml  ← general pattern diagram
 │   ├── facade_schema.puml   ← structural class diagram
 │   └── facade_flow.puml     ← sequence / call flow diagram
 └── tests/
@@ -68,10 +77,19 @@ structural/facade/
 ### As a module:
 ```python
 from structural.facade import CalculatorFacade
+from structural.facade.config import SERVICE_HOST, SERVICE_PATH, SOAP_ACTION_NS
+from structural.facade.service import SoapService
+from structural.facade.soap import RequestBuilder, ResponseParser
+from structural.facade.transport import HttpClient
 
-calc = CalculatorFacade()
-print(calc.add(5, 3))       # 8
-print(calc.multiply(3, 7))  # 21
+calc = CalculatorFacade(
+    service=SoapService(
+        transport=HttpClient(SERVICE_HOST, SERVICE_PATH, SOAP_ACTION_NS),
+        request_builder=RequestBuilder(),
+        response_parser=ResponseParser(),
+    )
+)
+print(calc.add(5, 3))   # 8
 ```
 
 ### Run the demo:
@@ -87,49 +105,55 @@ python -m unittest structural.facade.tests.test_facade -v
 ## Key Components
 
 ### CalculatorFacade (`calculator_facade.py`)
-Coordinates the three subsystems. Exposes `add()`, `subtract()`, `multiply()`, `divide()`.
-All four delegate through a shared `_call(operation, a, b)` method.
+Thin facade — receives a `Service` and exposes four named methods.
+No SOAP, HTTP, or XML knowledge here.
 
-### RequestBuilder (`soap/request_builder.py`)
-Builds a SOAP 1.1 XML envelope string for a given operation and two integer arguments.
+### SoapService (`service/soap.py`)
+Orchestrates the three-step pipeline: build envelope → post → parse result.
+Implements `Service` ABC — can be swapped for a mock or different protocol.
 
-### SoapClient (`soap/client.py`)
-Performs HTTP POST to `http://www.dneonline.com/calculator.asmx` with the correct
-`Content-Type` and `SOAPAction` headers.
+### HttpClient (`transport/http_client.py`)
+Uses stdlib `http.client` — no third-party dependencies.
+Takes `host`, `path`, `soap_action_ns` as constructor args; config imported only at the wiring point.
 
-### ResponseParser (`soap/response_parser.py`)
-Parses the XML response with `xml.etree.ElementTree` and extracts the integer `<OperationResult>` value.
-Raises `ValueError` for malformed XML or missing result elements.
+### config.py
+Single place to change the service endpoint:
+```python
+SERVICE_HOST   = "www.dneonline.com"
+SERVICE_PATH   = "/calculator.asmx"
+SOAP_ACTION_NS = "http://tempuri.org"
+```
 
 ## Call Flow
 
 ```
 Client → CalculatorFacade.add(5, 3)
-           → RequestBuilder.build("Add", 5, 3)  → SOAP XML envelope
-           → SoapClient.call(envelope, "Add")    → raw XML response
-           → ResponseParser.parse("Add", xml)    → 8
-           ← return 8
+           → SoapService.calculate("Add", 5, 3)
+               → RequestBuilder.build("Add", 5, 3)  → SOAP XML envelope
+               → HttpClient.post(envelope, "Add")    → raw XML response
+               → ResponseParser.parse("Add", xml)    → 8
+           ← 8
 ```
+
+## Diagrams
+
+- **`uml/facade_general.puml`** — abstract pattern diagram: Client → Facade → Subsystems
+- **`uml/facade_schema.puml`** — full structural class diagram with all layers and relationships
+![facade_schema_uml.png](uml/facade_schema_uml.png)-
+- **`uml/facade_flow.puml`** — sequence diagram: call flow through all layers for `add(5, 3)`
 
 ## Facade vs Adapter
 
-Both patterns introduce an indirection layer, but they serve different goals:
-
-| Aspect       | Facade                                     | Adapter                                      |
-|--------------|--------------------------------------------|----------------------------------------------|
-| **Purpose**  | Simplify a complex subsystem               | Convert one interface into another           |
-| **Wraps**    | Multiple subsystem classes                 | One existing class                           |
-| **Interface**| Defines a new, simpler interface           | Conforms to an existing expected interface   |
-| **Problem**  | Client knows too many details              | Client expects an interface the class lacks  |
-| **Example**  | `calc.add(5, 3)` hides SOAP machinery      | `weather.get_temperature()` wraps `pobierz_temperatura()` |
-
-In short: **Adapter** makes incompatible code work together; **Facade** reduces complexity.
-
-A Facade can also act as an Adapter if the simplified interface happens to match a required contract,
-but the motivation is different — simplification vs. translation.
+| Aspect | Facade | Adapter |
+|--------|--------|---------|
+| **Purpose** | Simplify a complex subsystem | Convert one interface into another |
+| **Wraps** | Multiple subsystem classes | One existing class |
+| **Interface** | Defines a new, simpler interface | Conforms to an existing expected interface |
+| **Problem** | Client knows too many details | Class lacks expected interface |
 
 ## Benefits
 
-- **Reduced coupling**: client depends on one class, not on HTTP/XML libraries
-- **Single entry point**: subsystems can be swapped without changing client code
-- **Testable**: subsystems are independently testable; facade tested via mocks
+- **Reduced coupling**: client depends only on `Calculator` ABC
+- **Replaceable layers**: swap `HttpClient` for a mock `Transport` without touching the facade
+- **Config in one place**: `config.py` — one line to change the endpoint
+- **Testable**: each layer tested independently; facade tested via mocked `Service`

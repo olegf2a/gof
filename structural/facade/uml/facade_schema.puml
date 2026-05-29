@@ -5,45 +5,80 @@ skinparam classFontStyle bold
 skinparam ArrowColor #444444
 skinparam ClassBorderColor #444444
 
+package "Interface" {
+  abstract class Calculator {
+    + add(a: int, b: int) : int  {abstract}
+    + subtract(a: int, b: int) : int  {abstract}
+    + multiply(a: int, b: int) : int  {abstract}
+    + divide(a: int, b: int) : int  {abstract}
+  }
+}
+
 package "Facade" {
   class CalculatorFacade {
-    - _client : SoapClient
-    - _builder : RequestBuilder
-    - _parser : ResponseParser
+    - _service : Service
     + add(a: int, b: int) : int
     + subtract(a: int, b: int) : int
     + multiply(a: int, b: int) : int
     + divide(a: int, b: int) : int
-    - _call(operation: str, a: int, b: int) : int
   }
+
+  Calculator <|-- CalculatorFacade
 }
 
-package "Subsystems (soap/)" {
-  class RequestBuilder {
-    + build(operation: str, a: int, b: int) : str
+package "Service layer" {
+  abstract class Service {
+    + calculate(operation: str, a: int, b: int) : int  {abstract}
   }
 
-  class SoapClient {
-    + call(envelope: str, action: str) : str
+  class SoapService {
+    - _transport       : Transport
+    - _request_builder : RequestBuilder
+    - _response_parser : ResponseParser
+    + calculate(operation: str, a: int, b: int) : int
+  }
+
+  Service <|-- SoapService
+}
+
+package "Subsystems" {
+  abstract class Transport {
+    + post(envelope: str, operation: str) : str  {abstract}
+  }
+
+  class HttpClient {
+    - _host           : str
+    - _path           : str
+    - _soap_action_ns : str
+    + post(envelope: str, operation: str) : str
+  }
+
+  class RequestBuilder {
+    + build(operation: str, a: int, b: int) : str
   }
 
   class ResponseParser {
     + parse(operation: str, xml: str) : int
   }
+
+  Transport <|-- HttpClient
 }
 
-CalculatorFacade *-- SoapClient     : uses
-CalculatorFacade *-- RequestBuilder : uses
-CalculatorFacade *-- ResponseParser : uses
-
-note bottom of CalculatorFacade
-  Hides all SOAP details from client.
-  Client only calls add / subtract /
-  multiply / divide.
-end note
+CalculatorFacade o-- Service      : delegates to
+SoapService      *-- Transport    : uses
+SoapService      *-- RequestBuilder : uses
+SoapService      *-- ResponseParser : uses
 
 legend right
-  *-- composition
+  <|--  inheritance / implementation
+  o--   aggregation (delegates to)
+  *--   composition (owns)
 end legend
+
+note bottom of CalculatorFacade
+  Client only calls add / subtract /
+  multiply / divide. All transport
+  and parsing details are hidden.
+end note
 
 @enduml
