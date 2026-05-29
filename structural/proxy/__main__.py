@@ -4,7 +4,7 @@ from ..facade.calculator import Calculator  # type: ignore[import-not-found]
 from .calculator_proxy import CalculatorProxy
 
 
-def _make_facade_mock() -> Calculator:
+def _make_facade_mock() -> MagicMock:
     mock = MagicMock(spec=Calculator)
     mock.add.return_value = 8
     mock.subtract.return_value = 6
