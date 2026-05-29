@@ -1,0 +1,59 @@
+@startuml cor_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+class Request {
+  + emergency_type : str
+  + location       : str
+  + description    : str
+}
+
+package "Handler" {
+  abstract class Handler {
+    + handle(request: Request) : str | None  {abstract}
+  }
+
+  class Fire {
+    + handle(request: Request) : str | None
+  }
+
+  class Police {
+    + handle(request: Request) : str | None
+  }
+
+  class Medical {
+    + handle(request: Request) : str | None
+  }
+
+  Handler <|-- Fire
+  Handler <|-- Police
+  Handler <|-- Medical
+}
+
+class Chain {
+  - _handlers : list[Handler]
+  + add_handler(handler: Handler) : None
+  + call_service(request: Request) : str
+}
+
+Chain *-- Handler : contains
+Chain ..> Request  : uses
+Handler ..> Request : uses
+
+legend right
+  <|--  inheritance
+  *--   composition (owns list)
+  ..>   dependency
+end legend
+
+note right of Chain
+  Iterates _handlers in order.
+  Returns first non-None result.
+  Raises ValueError if none match.
+end note
+
+@enduml

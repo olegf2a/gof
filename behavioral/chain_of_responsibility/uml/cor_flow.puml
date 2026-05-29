@@ -1,0 +1,65 @@
+@startuml cor_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+
+actor Client
+
+participant "Chain" as Chain
+participant "Fire" as Fire
+participant "Police" as Police
+participant "Medical" as Medical
+
+== Fire emergency ==
+
+Client -> Chain : call_service(Request("fire", "Main St", ...))
+activate Chain
+
+Chain -> Fire : handle(request)
+activate Fire
+Fire --> Chain : "Fire DEPARTMENT dispatched to Main St..."
+deactivate Fire
+
+Chain --> Client : "Fire DEPARTMENT dispatched to Main St..."
+deactivate Chain
+
+== Medical emergency (chain iterates past non-matching) ==
+
+Client -> Chain : call_service(Request("medical", "Park Ave", ...))
+activate Chain
+
+Chain -> Fire : handle(request)
+activate Fire
+Fire --> Chain : None
+deactivate Fire
+
+Chain -> Police : handle(request)
+activate Police
+Police --> Chain : None
+deactivate Police
+
+Chain -> Medical : handle(request)
+activate Medical
+Medical --> Chain : "Medical ASSISTANCE dispatched to Park Ave..."
+deactivate Medical
+
+Chain --> Client : "Medical ASSISTANCE dispatched to Park Ave..."
+deactivate Chain
+
+== Unknown type (no handler matches) ==
+
+Client -> Chain : call_service(Request("unknown", ...))
+activate Chain
+
+Chain -> Fire    : handle(request)
+Fire    --> Chain : None
+Chain -> Police  : handle(request)
+Police  --> Chain : None
+Chain -> Medical : handle(request)
+Medical --> Chain : None
+
+Chain --> Client : raises ValueError
+deactivate Chain
+
+@enduml

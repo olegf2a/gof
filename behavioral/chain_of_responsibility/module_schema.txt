@@ -1,0 +1,80 @@
+CHAIN OF RESPONSIBILITY — Emergency Dispatcher
+══════════════════════════════════════════════════════════════
+
+  TASK: Dispatch emergency services (Fire, Police, Medical)
+        through a single unified interface.
+        Each handler decides if it can process the request.
+        The chain iterates handlers until one responds.
+
+  REQUEST
+  ─────────────────────────────────────────────────────────
+  EmergencyRequest
+  + emergency_type : str    ← "fire" | "police" | "medical"
+  + location       : str
+  + description    : str
+
+  HANDLER INTERFACE
+  ─────────────────────────────────────────────────────────
+  Handler  (ABC)
+  + handle(request: EmergencyRequest) → str | None  {abstract}
+    → return str if this handler processes the request
+    → return None to pass to the next handler
+
+  CONCRETE HANDLERS
+  ─────────────────────────────────────────────────────────
+  FireHandler    handles "fire"    → "Fire department dispatched to {location}"
+  PoliceHandler  handles "police"  → "Police dispatched to {location}"
+  MedicalHandler handles "medical" → "Medical assistance dispatched to {location}"
+
+  CHAIN
+  ─────────────────────────────────────────────────────────
+  HandlerChain
+  - _handlers : list[Handler]
+  + add(handler: Handler) → None
+  + handle(request: EmergencyRequest) → str
+    → iterates _handlers in order
+    → returns first non-None result
+    → raises ValueError if no handler can process the request
+
+  Call flow — fire emergency:
+  ──────────────────────────────────────────────────────────
+  chain.handle(EmergencyRequest("fire", "Main St", "Building on fire"))
+    → FireHandler.handle()    → "Fire department dispatched to Main St"
+    → stops, returns result
+
+  Call flow — medical emergency (chain iterates past non-matching):
+  ──────────────────────────────────────────────────────────
+  chain.handle(EmergencyRequest("medical", "Park Ave", "Heart attack"))
+    → FireHandler.handle()    → None   (not my type, skip)
+    → PoliceHandler.handle()  → None   (not my type, skip)
+    → MedicalHandler.handle() → "Medical assistance dispatched to Park Ave"
+    → stops, returns result
+
+  Call flow — unknown type:
+  ──────────────────────────────────────────────────────────
+  chain.handle(EmergencyRequest("unknown", "..."))
+    → FireHandler.handle()    → None
+    → PoliceHandler.handle()  → None
+    → MedicalHandler.handle() → None
+    → raises ValueError("No handler found for request: unknown")
+
+FILE STRUCTURE:
+  behavioral/chain-of-responsibility/
+  ├── __init__.py
+  ├── __main__.py              ← demo
+  ├── module_schema.txt
+  ├── request.py               ← EmergencyRequest
+  ├── handler.py               ← Handler ABC
+  ├── chain.py                 ← HandlerChain
+  ├── handlers/
+  │   ├── __init__.py
+  │   ├── fire.py              ← FireHandler
+  │   ├── police.py            ← PoliceHandler
+  │   └── medical.py           ← MedicalHandler
+  ├── uml/
+  │   ├── cor_general.puml     ← general pattern diagram
+  │   ├── cor_schema.puml      ← structural class diagram
+  │   └── cor_flow.puml        ← sequence diagram
+  └── tests/
+      ├── __init__.py
+      └── test_cor.py

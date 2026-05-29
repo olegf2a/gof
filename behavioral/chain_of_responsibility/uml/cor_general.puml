@@ -1,0 +1,64 @@
+@startuml cor_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+}
+
+package "Chain of Responsibility" {
+
+  abstract class Handler {
+    + handle(request) : result  {abstract}
+  }
+
+  class ConcreteHandlerA {
+    + handle(request) : result
+  }
+
+  class ConcreteHandlerB {
+    + handle(request) : result
+  }
+
+  class ConcreteHandlerC {
+    + handle(request) : result
+  }
+
+  class HandlerChain {
+    - _handlers : list[Handler]
+    + add(handler: Handler) : None
+    + handle(request) : result
+  }
+
+  Handler <|-- ConcreteHandlerA
+  Handler <|-- ConcreteHandlerB
+  Handler <|-- ConcreteHandlerC
+
+  HandlerChain *-- Handler : contains
+}
+
+Client --> HandlerChain : sends request
+
+note right of HandlerChain
+  Iterates _handlers in order.
+  Stops at the first handler
+  that can process the request.
+end note
+
+note right of Handler
+  Each handler checks if it
+  can process the request.
+  Returns result or None.
+end note
+
+legend right
+  <|--  inheritance
+  *--   composition (owns list)
+  -->   association
+end legend
+
+@enduml
