@@ -1,0 +1,83 @@
+@startuml Decorator_Pattern
+
+title Decorator Pattern - Custom Pizza
+
+' ─── Component ───
+abstract class Pizza {
+  +{abstract} get_description(): str
+  +{abstract} get_price(): float
+}
+
+' ─── Concrete Component ───
+class PizzaBase {
+  +get_description(): str
+  +get_price(): float
+}
+
+' ─── Base Decorator ───
+abstract class Decorator {
+  -_pizza: Pizza
+  +__init__(pizza: Pizza)
+  +{abstract} _get_topping_name(): str
+  +{abstract} _get_topping_price(): float
+  +get_description(): str
+  +get_price(): float
+}
+
+' ─── Concrete Decorators ───
+class Cheese {
+  +_get_topping_name(): str
+  +_get_topping_price(): float
+}
+
+class Bacon {
+  +_get_topping_name(): str
+  +_get_topping_price(): float
+}
+
+class Pineapple {
+  +_get_topping_name(): str
+  +_get_topping_price(): float
+}
+
+class Mushroom {
+  +_get_topping_name(): str
+  +_get_topping_price(): float
+}
+
+class Seafood {
+  +_get_topping_name(): str
+  +_get_topping_price(): float
+}
+
+' ─── Relationships ───
+Pizza <|-- PizzaBase
+Pizza <|-- Decorator
+Decorator <|-- Cheese
+Decorator <|-- Bacon
+Decorator <|-- Pineapple
+Decorator <|-- Mushroom
+Decorator <|-- Seafood
+Decorator o-- Pizza : wraps
+
+note right of Decorator
+  Template Method:
+  get_description() and get_price()
+  call _get_topping_name() and
+  _get_topping_price() — defined
+  by each concrete topping.
+end note
+
+note left of PizzaBase
+  Concrete Component:
+  Starting point for
+  all pizza builds.
+end note
+
+legend bottom right
+  |= Symbol |= Type        |= Meaning                              |
+  | <|--    | Inheritance  | "is-a": implements interface          |
+  | o--     | Aggregation  | "wraps": holds a Pizza reference      |
+endlegend
+
+@enduml

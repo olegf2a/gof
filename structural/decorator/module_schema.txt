@@ -1,0 +1,53 @@
+DECORATOR PATTERN — Custom Pizza
+══════════════════════════════════════════════════════════════
+
+  TASK: Build a pizza with custom toppings where each topping
+        wraps the previous pizza, adding its name and price.
+
+  COMPONENT (abstract)         CONCRETE COMPONENT    BASE DECORATOR
+  ────────────────────         ──────────────────    ──────────────────────
+  Pizza                        BasePizza(Pizza)       ToppingDecorator(Pizza)
+  + get_description() -> str     + get_description()   - _pizza: Pizza
+  + get_price() -> float           → "Base pizza"      + get_description()
+                                 + get_price()           → _pizza.get_description()
+                                   → 5.00              + get_price()
+                                                         → _pizza.get_price()
+                                                              │
+                                                         ─────┤
+                                                    CheeseTopping    +$1.50
+                                                    BaconTopping     +$2.00
+                                                    PineappleTopping +$1.00
+                                                    MushroomTopping  +$1.50
+                                                    SeafoodTopping   +$2.50
+
+  Example wrapping:
+    pizza = BasePizza()
+    pizza = CheeseTopping(pizza)      → "Base pizza, cheese"          $6.50
+    pizza = BaconTopping(pizza)       → "Base pizza, cheese, bacon"   $8.50
+    pizza = PineappleTopping(pizza)   → "..., pineapple"              $9.50
+
+  pizza.get_description()  →  each decorator prepends _pizza.get_description()
+  pizza.get_price()        →  each decorator adds its price to _pizza.get_price()
+
+  Why Decorator:
+  Client wraps BasePizza with any combination of toppings at runtime —
+  no subclass explosion (CheeseBaconPizza, CheesePineapplePizza, etc.)
+
+FILE STRUCTURE:
+  structural/decorator/
+  ├── __init__.py
+  ├── __main__.py              ← demo + interactive user recipe
+  ├── pizza/
+  │   ├── __init__.py
+  │   ├── base.py              ← Pizza (ABC)
+  │   ├── base_pizza.py        ← BasePizza (concrete component)
+  │   └── decorator.py        ← ToppingDecorator (abstract decorator)
+  ├── toppings/
+  │   ├── __init__.py
+  │   ├── cheese.py            ← CheeseTopping    (+$1.50)
+  │   ├── bacon.py             ← BaconTopping     (+$2.00)
+  │   ├── pineapple.py         ← PineappleTopping (+$1.00)
+  │   ├── mushroom.py          ← MushroomTopping  (+$1.50)
+  │   └── seafood.py           ← SeafoodTopping   (+$2.50)
+  └── tests/
+      └── test_decorator.py

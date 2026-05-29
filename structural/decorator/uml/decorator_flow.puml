@@ -1,0 +1,33 @@
+@startuml Decorator_Flow
+
+title Decorator Pattern — Call Flow
+
+participant Client
+participant "Seafood\n(Decorator)" as Seafood
+participant "Cheese\n(Decorator)" as Cheese
+participant "PizzaBase\n(Component)" as Base
+
+== Build ==
+Client -> Base   : PizzaBase()
+Client -> Cheese : Cheese(base)
+Client -> Seafood: Seafood(cheese)
+
+== pizza.get_description() ==
+Client  -> Seafood : get_description()
+Seafood -> Cheese  : _pizza.get_description()
+Cheese  -> Base    : _pizza.get_description()
+Base   --> Cheese  : "Base Pizza"
+Cheese --> Seafood : "Base Pizza, cheese"
+Seafood -> Seafood : + ", " + _get_topping_name()
+Seafood --> Client : "Base Pizza, cheese, seafood"
+
+== pizza.get_price() ==
+Client  -> Seafood : get_price()
+Seafood -> Cheese  : _pizza.get_price()
+Cheese  -> Base    : _pizza.get_price()
+Base   --> Cheese  : 5.0
+Cheese --> Seafood : 6.5
+Seafood -> Seafood : + _get_topping_price()
+Seafood --> Client : 9.0
+
+@enduml
