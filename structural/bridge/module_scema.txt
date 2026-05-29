@@ -1,0 +1,54 @@
+design schema:
+
+  BRIDGE PATTERN — Cafe
+  ══════════════════════════════════════════════════════════════
+
+    ABSTRACTION (what course)       IMPLEMENTATION (which cuisine)
+    ─────────────────────────       ──────────────────────────────
+
+    Dish  ──────────────────────►  CuisineImpl
+    - _cuisine: CuisineImpl         + prepare_first()  -> str
+    + serve() -> str                + prepare_second() -> str
+    + get_course_name() -> str      + prepare_third()  -> str
+             │                      + prepare_dessert()-> str
+             │                      + get_name()       -> str
+        ─────┤                               │
+        │    │                         ──────┤
+    FirstCourse                       ItalianCuisine
+      serve() → _cuisine.prepare_first()
+                                      JapaneseCuisine
+    SecondCourse
+      serve() → _cuisine.prepare_second()
+                                      UkrainianCuisine
+    ThirdCourse
+      serve() → _cuisine.prepare_third()
+
+    Dessert
+      serve() → _cuisine.prepare_dessert()
+
+
+    Client (Cafe)
+      meal = [FirstCourse(italian), SecondCourse(italian),
+              ThirdCourse(italian), Dessert(italian)]
+      → swap cuisine without changing dish classes
+      → swap dish type without changing cuisine classes
+
+  Why Bridge here:
+  Without it you'd need ItalianFirstCourse, JapaneseFirstCourse, UkrainianFirstCourse… → N×M classes. With Bridge: N + M classes, varied independently.
+
+  File structure:
+  structural/bridge/
+  ├── cuisine/
+  │   ├── base.py          ← CuisineImpl (ABC)
+  │   ├── italian.py
+  │   ├── japanese.py
+  │   └── ukrainian.py
+  ├── dishes/
+  │   ├── base.py          ← Dish (abstract, holds CuisineImpl)
+  │   ├── first_course.py
+  │   ├── second_course.py
+  │   ├── third_course.py
+  │   └── dessert.py
+  ├── __main__.py          ← demo
+  └── tests/
+      └── test_bridge.py

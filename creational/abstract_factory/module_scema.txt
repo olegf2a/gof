@@ -1,0 +1,82 @@
+design schema:
+
+  ABSTRACT FACTORY PATTERN — International Cafe
+  ══════════════════════════════════════════════════════════════
+
+    GENERAL STRUCTURE
+    ─────────────────
+
+    Client
+      │
+      └──► AbstractFactory ◄────────────────────────────────┐
+              + create_product_a(): AbstractProductA          │
+              + create_product_b(): AbstractProductB          │
+              + create_product_c(): AbstractProductC          │
+                      │                                       │
+              ─────────────────────                           │
+              │                   │                           │
+        ConcreteFactory1    ConcreteFactory2  ← implements ──┘
+              │                   │
+         creates ↓           creates ↓
+     ─────────────────   ─────────────────
+     ProductA1           ProductA2          ← both extend AbstractProductA
+     ProductB1           ProductB2          ← both extend AbstractProductB
+     ProductC1           ProductC2          ← both extend AbstractProductC
+
+    KEY ROLES
+    ─────────
+    AbstractFactory      — declares creation methods for each product type
+    ConcreteFactory      — creates a matched family of concrete products
+    AbstractProduct      — interface for a product type (used by client)
+    ConcreteProduct      — specific product, belongs to one factory's family
+    Client               — works only with abstract types; never names concretes
+
+  ══════════════════════════════════════════════════════════════
+
+  THIS IMPLEMENTATION — Cafe (cuisine families)
+  ─────────────────────────────────────────────
+
+    CuisineFactory (AbstractFactory)
+      + create_main_dish()  → MainDish
+      + create_side_dish()  → SideDish
+      + create_dessert()    → Dessert
+      + create_drink()      → Drink
+             │
+      ───────────────────────
+      │          │           │
+  JapaneseKitchen  AmericanKitchen  UkrainianKitchen
+      │                │                 │
+  Sushi/Miso/      Burger/Fries/     Borscht/Varenyky/
+  Mochi/GreenTea   ApplePie/Cola     Syrniki/Kompot
+
+    Cafe (Client)
+      - holds a CuisineFactory, never concrete kitchens
+      - serve_complete_meal() calls create_* on current factory
+      - change_kitchen()      swaps the whole cuisine family at once
+
+  Why Abstract Factory here:
+  The client (Cafe) needs a consistent set of dishes that belong together
+  (you wouldn't pair Sushi with ApplePie). The pattern guarantees that all
+  created products come from the same family — just swap the factory to
+  switch the entire menu. No if/elif cuisine logic in the client.
+
+  Compared to Factory Method:
+  Factory Method creates ONE product type; Abstract Factory creates a
+  FAMILY of related products through a single coordinated interface.
+
+  File structure:
+  creational/abstract_factory/
+  ├── factories/
+  │   ├── base.py          ← CuisineFactory (ABC)
+  │   ├── japanese.py
+  │   ├── american.py
+  │   └── ukrainian.py
+  ├── kitchens/            ← concrete products grouped by cuisine
+  │   ├── japanese_dishes.py
+  │   ├── american_dishes.py
+  │   └── ukrainian_dishes.py
+  ├── dishes/
+  │   └── base.py          ← MainDish / SideDish / Dessert / Drink (ABCs)
+  ├── cafe.py              ← Client
+  ├── client_demo.py       ← demo runner
+  └── __main__.py

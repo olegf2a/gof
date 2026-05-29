@@ -1,0 +1,104 @@
+@startuml Bridge_Pattern
+
+title Bridge Pattern - Cafe
+
+' ─── Abstraction ───
+abstract class Dish {
+  -_cuisine: Cuisine
+  +__init__(cuisine: Cuisine)
+  +{abstract} get_course_name(): str
+  +{abstract} serve(): str
+}
+
+' ─── Refined Abstractions ───
+class FirstCourse {
+  +get_course_name(): str
+  +serve(): str
+}
+
+class SecondCourse {
+  +get_course_name(): str
+  +serve(): str
+}
+
+class ThirdCourse {
+  +get_course_name(): str
+  +serve(): str
+}
+
+class Dessert {
+  +get_course_name(): str
+  +serve(): str
+}
+
+' ─── Implementation ───
+abstract class Cuisine {
+  +{abstract} get_name(): str
+  +{abstract} prepare_first(): str
+  +{abstract} prepare_second(): str
+  +{abstract} prepare_third(): str
+  +{abstract} prepare_dessert(): str
+}
+
+' ─── Concrete Implementations ───
+class Italian {
+  +get_name(): str
+  +prepare_first(): str
+  +prepare_second(): str
+  +prepare_third(): str
+  +prepare_dessert(): str
+}
+
+class Japanese {
+  +get_name(): str
+  +prepare_first(): str
+  +prepare_second(): str
+  +prepare_third(): str
+  +prepare_dessert(): str
+}
+
+class Ukrainian {
+  +get_name(): str
+  +prepare_first(): str
+  +prepare_second(): str
+  +prepare_third(): str
+  +prepare_dessert(): str
+}
+
+' ─── Relationships ───
+Dish <|-- FirstCourse
+Dish <|-- SecondCourse
+Dish <|-- ThirdCourse
+Dish <|-- Dessert
+
+Cuisine <|-- Italian
+Cuisine <|-- Japanese
+Cuisine <|-- Ukrainian
+
+Dish o-- Cuisine : bridge
+
+note top of Dish
+  Abstraction:
+  Defines what course type
+  delegates to Cuisine
+end note
+
+note top of Cuisine
+  Implementation:
+  Defines what each
+  cuisine prepares
+end note
+
+note bottom of Italian
+  Concrete Implementations:
+  vary independently
+  from dish types
+end note
+
+note bottom of FirstCourse
+  Refined Abstractions:
+  vary independently
+  from cuisines
+end note
+
+@enduml
