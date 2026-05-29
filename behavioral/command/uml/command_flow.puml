@@ -1,0 +1,103 @@
+@startuml command_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam sequenceLifeLineBorderColor #888888
+
+participant "__main__" as Main
+participant "order : Order"    as Order
+participant "cmd : AddTopping" as Cmd
+participant "pizza : Pizza"    as Pizza
+
+== Setup ==
+
+Main -> Pizza  : <<create>> Pizza()
+Main -> Order  : <<create>> Order(pizza)
+
+== Add toppings ==
+
+Main -> Order : run("cheese")
+activate Order
+  Order -> Cmd  : <<create>> AddTopping(pizza, "cheese")
+  Order -> Cmd  : execute()
+  activate Cmd
+    Cmd -> Pizza : action("cheese")
+    activate Pizza
+      Pizza --> Cmd : [_toppings = ["cheese"]]
+    deactivate Pizza
+  deactivate Cmd
+  Order -> Order : _history.append(cmd)
+deactivate Order
+
+Main -> Order : run("bacon")
+activate Order
+  Order -> Cmd  : <<create>> AddTopping(pizza, "bacon")
+  Order -> Cmd  : execute()
+  activate Cmd
+    Cmd -> Pizza : action("bacon")
+    activate Pizza
+      Pizza --> Cmd : [_toppings = ["cheese", "bacon"]]
+    deactivate Pizza
+  deactivate Cmd
+  Order -> Order : _history.append(cmd)
+deactivate Order
+
+Main -> Order : run("mushroom")
+activate Order
+  Order -> Cmd  : <<create>> AddTopping(pizza, "mushroom")
+  Order -> Cmd  : execute()
+  activate Cmd
+    Cmd -> Pizza : action("mushroom")
+    activate Pizza
+      Pizza --> Cmd : [_toppings = ["cheese", "bacon", "mushroom"]]
+    deactivate Pizza
+  deactivate Cmd
+  Order -> Order : _history.append(cmd)
+deactivate Order
+
+Main -> Order : describe()
+activate Order
+  Order -> Pizza : describe()
+  Pizza --> Order : "Base Pizza, cheese, bacon, mushroom"
+  Order --> Main  : "Base Pizza, cheese, bacon, mushroom"
+deactivate Order
+
+== Undo last topping ==
+
+Main -> Order : undo()
+activate Order
+  Order -> Order : cmd = _history.pop()   [mushroom cmd]
+  Order -> Cmd   : undo()
+  activate Cmd
+    Cmd -> Pizza : reverse_action("mushroom")
+    activate Pizza
+      Pizza --> Cmd : [_toppings = ["cheese", "bacon"]]
+    deactivate Pizza
+  deactivate Cmd
+deactivate Order
+
+Main -> Order : describe()
+activate Order
+  Order -> Pizza : describe()
+  Pizza --> Order : "Base Pizza, cheese, bacon"
+  Order --> Main  : "Base Pizza, cheese, bacon"
+deactivate Order
+
+== Undo on empty history (no-op) ==
+
+Main -> Order : undo()
+activate Order
+  Order -> Order : undo()
+  Order -> Order : undo()
+  Order -> Order : _history is empty — return
+deactivate Order
+
+Main -> Order : describe()
+activate Order
+  Order -> Pizza : describe()
+  Pizza --> Order : "Base Pizza (no toppings)"
+  Order --> Main  : "Base Pizza (no toppings)"
+deactivate Order
+
+@enduml

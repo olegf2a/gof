@@ -1,0 +1,84 @@
+COMMAND PATTERN — Custom Pizza Order
+══════════════════════════════════════════════════════════════
+
+  TASK: Build a custom pizza by adding toppings via commands.
+        Each topping addition is a Command that can be undone.
+        Toppings: Cheese, Bacon, Pineapple, Mushroom, Seafood
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  Receiver  → Pizza          (knows how to add/remove toppings)
+  Command   → Command ABC    (encapsulates one topping action)
+  Invoker   → Order          (stores and executes commands, supports undo)
+  Client    → __main__.py    (creates commands, submits to order)
+
+  RECEIVER
+  ─────────────────────────────────────────────────────────
+  Pizza
+  - _toppings : list[str]
+  + add_topping(topping: str)    → None
+  + remove_topping(topping: str) → None
+  + get_toppings()               → list[str]
+  + describe()                   → str
+
+  COMMAND
+  ─────────────────────────────────────────────────────────
+  Command  (ABC)
+  + execute() → None  {abstract}
+  + undo()    → None  {abstract}
+
+  AddToppingCommand(Command)
+  - _pizza   : Pizza
+  - _topping : str
+  + execute() → pizza.add_topping(_topping)
+  + undo()    → pizza.remove_topping(_topping)
+
+  INVOKER
+  ─────────────────────────────────────────────────────────
+  Order
+  - _pizza   : Pizza
+  - _history : list[Command]
+  + add(topping: str) → None   creates AddToppingCommand, executes, appends to history
+  + undo()            → None   pops last command from history, calls undo()
+  + describe()        → str    delegates to pizza.describe()
+
+  Call flow — adding toppings:
+  ──────────────────────────────────────────────────────────
+  order.add("cheese")
+    → cmd = AddToppingCommand(pizza, "cheese")
+    → cmd.execute()              → pizza.add_topping("cheese")
+    → _history.append(cmd)
+
+  order.add("bacon")
+    → cmd = AddToppingCommand(pizza, "bacon")
+    → cmd.execute()              → pizza.add_topping("bacon")
+    → _history.append(cmd)
+
+  order.describe()  →  "Base Pizza, cheese, bacon"
+
+  Call flow — undo:
+  ──────────────────────────────────────────────────────────
+  order.undo()
+    → cmd = _history.pop()       ← last command (bacon)
+    → cmd.undo()                 → pizza.remove_topping("bacon")
+
+  order.describe()  →  "Base Pizza, cheese"
+
+FILE STRUCTURE:
+  behavioral/command/
+  ├── __init__.py
+  ├── __main__.py              ← demo + interactive user recipe
+  ├── module_schema.txt
+  ├── command.py               ← Command ABC
+  ├── pizza.py                 ← Pizza (receiver)
+  ├── order.py                 ← Order (invoker)
+  ├── commands/
+  │   ├── __init__.py
+  │   └── add_topping.py       ← AddToppingCommand
+  ├── uml/
+  │   ├── command_general.puml ← abstract pattern diagram
+  │   ├── command_schema.puml  ← structural class diagram
+  │   └── command_flow.puml    ← sequence diagram
+  └── tests/
+      ├── __init__.py
+      └── test_command.py
