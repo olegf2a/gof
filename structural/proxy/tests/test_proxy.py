@@ -7,7 +7,7 @@ from ...facade.calculator import Calculator  # type: ignore[import-not-found]
 from ..calculator_proxy import CalculatorProxy
 
 
-def _make_subject() -> Calculator:
+def _make_subject() -> MagicMock:
     mock = MagicMock(spec=Calculator)
     mock.add.return_value = 8
     mock.subtract.return_value = 6
@@ -38,7 +38,7 @@ class TestCalculatorProxyInterface(unittest.TestCase):
 class TestCachingBehaviour(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.subject = _make_subject()
+        self.subject: MagicMock = _make_subject()
         self.proxy = CalculatorProxy(self.subject)
 
     def test_first_call_forwarded_to_subject(self) -> None:
