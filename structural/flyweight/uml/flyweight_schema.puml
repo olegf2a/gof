@@ -1,0 +1,74 @@
+@startuml flyweight_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+
+package "Flyweights (intrinsic state — shared)" {
+  abstract class UnitFlyweight {
+    + texture : str  {abstract}
+    + sounds  : list[str]  {abstract}
+    + render(x: int, y: int) : None
+  }
+
+  class TankFlyweight {
+    + texture = "tank.png"
+    + sounds  = ["engine.wav", "shot.wav"]
+  }
+
+  class InfantryFlyweight {
+    + texture = "infantry.png"
+    + sounds  = ["march.wav", "rifle.wav"]
+  }
+
+  UnitFlyweight <|-- TankFlyweight
+  UnitFlyweight <|-- InfantryFlyweight
+}
+
+package "Factory" {
+  class FlyweightFactory {
+    - _cache : dict[str, UnitFlyweight]
+    + get(unit_type: str) : UnitFlyweight
+  }
+
+  FlyweightFactory *-- UnitFlyweight : caches
+}
+
+package "Context (extrinsic state — per instance)" {
+  class Unit {
+    - _x         : int
+    - _y         : int
+    - _flyweight : UnitFlyweight
+    + move(dx: int, dy: int) : None
+    + render() : None
+  }
+
+  class Army {
+    - _units : list[Unit]
+    + add(unit: Unit) : None
+    + move_all(dx: int, dy: int) : None
+    + render_all() : None
+  }
+
+  Unit o-- UnitFlyweight : delegates to
+  Army *-- Unit           : contains
+}
+
+legend right
+  <|--  inheritance
+  *--   composition
+  o--   aggregation
+end legend
+
+note top of UnitFlyweight
+  Heavy data stored once per type.
+  Shared across all unit instances.
+end note
+
+note right of Unit
+  Lightweight context.
+  Only x, y differ per instance.
+end note
+
+@enduml

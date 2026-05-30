@@ -1,0 +1,91 @@
+FLYWEIGHT PATTERN — Game Units
+══════════════════════════════════════════════════════════════
+
+  TASK: Support two unit types (Tank, Infantry) that can be
+        combined into a single army list and moved together,
+        while heavy data (texture, sounds) is stored only
+        once per unit type.
+
+  INTRINSIC STATE (shared, stored once per type):
+  ─────────────────────────────────────────────────
+  texture : str          — sprite filename
+  sounds  : list[str]    — audio filenames
+
+  EXTRINSIC STATE (unique per unit instance):
+  ─────────────────────────────────────────────────
+  x, y : int             — current map coordinates
+
+  FLYWEIGHTS (intrinsic data only)
+  ─────────────────────────────────────────
+  UnitFlyweight  (ABC)
+  + texture : str
+  + sounds  : list[str]
+  + render(x, y) → None
+
+  TankFlyweight                InfantryFlyweight
+  texture = "tank.png"         texture = "infantry.png"
+  sounds  = ["engine.wav",     sounds  = ["march.wav",
+             "shot.wav"]                  "rifle.wav"]
+
+  FACTORY (cache — guarantees one flyweight per type)
+  ─────────────────────────────────────────────────────
+  FlyweightFactory
+  - _cache : dict[str, UnitFlyweight]
+  + get(unit_type: str) → UnitFlyweight
+    → returns cached instance or creates + caches new one
+
+  UNIT (holds extrinsic state + flyweight reference)
+  ─────────────────────────────────────────────────────
+  Unit
+  - _x          : int
+  - _y          : int
+  - _flyweight  : UnitFlyweight
+  + move(dx, dy) → None     updates _x, _y
+  + render()     → None     delegates to _flyweight.render(_x, _y)
+
+  ARMY (collection — uniform interface for heterogeneous units)
+  ─────────────────────────────────────────────────────────────
+  Army
+  - _units : list[Unit]
+  + add(unit)          → None
+  + move_all(dx, dy)   → None   moves every unit by (dx, dy)
+  + render_all()       → None   renders every unit
+
+  Call flow — move_all then render_all:
+  ──────────────────────────────────────────────────────────────
+  army.move_all(10, 0)
+    → tank1.move(10, 0)      _x += 10, _y += 0
+    → infantry1.move(10, 0)  _x += 10, _y += 0
+    → infantry2.move(10, 0)  _x += 10, _y += 0
+
+  army.render_all()
+    → tank1.render()
+        → TankFlyweight.render(x, y)      ← shared texture/sounds
+    → infantry1.render()
+        → InfantryFlyweight.render(x, y)  ← shared texture/sounds
+    → infantry2.render()
+        → InfantryFlyweight.render(x, y)  ← same instance reused
+
+  Memory guarantee:
+    factory.get("tank") is factory.get("tank")  → True
+    Only 2 flyweight objects exist for any army size.
+
+FILE STRUCTURE:
+  structural/flyweight/
+  ├── __init__.py
+  ├── __main__.py              ← demo
+  ├── module_schema.txt
+  ├── unit.py                  ← Unit (extrinsic: x, y + flyweight ref)
+  ├── factory.py               ← FlyweightFactory (cache)
+  ├── army.py                  ← Army
+  ├── flyweights/
+  │   ├── __init__.py
+  │   ├── base.py              ← UnitFlyweight (ABC)
+  │   ├── tank.py              ← TankFlyweight
+  │   └── infantry.py          ← InfantryFlyweight
+  ├── uml/
+  │   ├── flyweight_schema.puml
+  │   └── flyweight_flow.puml
+  └── tests/
+      ├── __init__.py
+      └── test_flyweight.py
