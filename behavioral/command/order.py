@@ -1,5 +1,4 @@
 from . import Command, Invoker, Receiver
-from .commands import AddTopping
 
 
 class Order(Invoker):
@@ -7,8 +6,7 @@ class Order(Invoker):
         self._receiver: Receiver = receiver
         self._history: list[Command] = []
 
-    def run(self, action: str) -> None:
-        cmd = AddTopping(self._receiver, action)
+    def run(self, cmd: Command) -> None:
         cmd.execute()
         self._history.append(cmd)
 

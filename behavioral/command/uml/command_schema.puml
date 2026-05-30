@@ -14,16 +14,16 @@ package "Client" {
 
 package "Invoker" {
   abstract class Invoker {
-    + run(action: str) : None  {abstract}
-    + undo()           : None  {abstract}
+    + run(cmd: Command) : None  {abstract}
+    + undo()            : None  {abstract}
   }
 
   class Order {
     - _receiver : Receiver
     - _history  : list[Command]
-    + run(action: str) : None
-    + undo()           : None
-    + describe()       : str
+    + run(cmd: Command) : None
+    + undo()            : None
+    + describe()        : str
   }
 
   Invoker <|-- Order
@@ -42,43 +42,74 @@ package "Command" {
     + undo()    : None
   }
 
+  class RemoveTopping {
+    - _receiver : Receiver
+    - _context  : str
+    + execute() : None
+    + undo()    : None
+  }
+
+  class ClearTopping {
+    - _receiver : Receiver
+    - _actions  : list[str]
+    + execute() : None
+    + undo()    : None
+  }
+
+  class ItalianCustomToppings {
+    - _receiver : Receiver
+    + execute() : None
+    + undo()    : None
+  }
+
   Command <|-- AddTopping
+  Command <|-- RemoveTopping
+  Command <|-- ClearTopping
+  Command <|-- ItalianCustomToppings
 }
 
 package "Receiver" {
   abstract class Receiver {
-    + action(context: str)         : None  {abstract}
-    + reverse_action(context: str) : None  {abstract}
-    + describe()                   : str   {abstract}
+    + action(context: str)         : None      {abstract}
+    + reverse_action(context: str) : None      {abstract}
+    + clear_actions()              : None      {abstract}
+    + get_actions()                : list[str] {abstract}
+    + describe()                   : str       {abstract}
   }
 
   class Pizza {
     - _toppings : list[str]
     + action(context: str)         : None
     + reverse_action(context: str) : None
-    + get_toppings()               : list[str]
+    + clear_actions()              : None
+    + get_actions()                : list[str]
     + describe()                   : str
   }
 
   Receiver <|-- Pizza
 }
 
-Main        -->  Order       : creates & drives
-Main        -->  Pizza       : creates
-Order       *--  Command     : stores history
-Order       o--> Receiver    : holds
-AddTopping  o--> Receiver    : calls action on
+Main              -->  Order       : creates & drives
+Main              -->  Pizza       : creates
+Main              -->  Command     : creates commands
+Order             *--  Command     : stores history
+Order             o--> Receiver    : holds
+AddTopping        o--> Receiver    : action / reverse_action
+RemoveTopping     o--> Receiver    : reverse_action / action
+ClearTopping      o--> Receiver    : clear_actions / get_actions
+ItalianCustomToppings o--> Receiver : action / reverse_action
 
 note right of Order
-  run() creates a Command,
-  executes it, appends to history.
-  undo() pops and reverses last.
+  run(cmd) executes cmd,
+  appends to history.
+  Client is responsible
+  for creating commands.
 end note
 
-note right of Command
-  Encapsulates one topping action.
-  execute() → action()
-  undo()    → reverse_action()
+note right of ClearTopping
+  execute() saves snapshot
+  via get_actions(), then clears.
+  undo() restores from snapshot.
 end note
 
 legend right

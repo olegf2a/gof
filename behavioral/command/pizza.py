@@ -11,7 +11,10 @@ class Pizza(Receiver):
     def reverse_action(self, context: str) -> None:
         self._toppings.remove(context)
 
-    def get_toppings(self) -> list[str]:
+    def clear_actions(self) -> None:
+        self._toppings[:] = []
+
+    def get_actions(self) -> list[str]:
         return list(self._toppings)
 
     def describe(self) -> str:
