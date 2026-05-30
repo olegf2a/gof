@@ -1,0 +1,83 @@
+@startuml flyweight_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam SequenceGroupBorderColor #888888
+
+actor Client
+
+participant "FlyweightFactory" as Factory
+participant "TankFlyweight\n(shared)" as TankFW
+participant "InfantryFlyweight\n(shared)" as InfFW
+participant "tank1 : Unit" as Tank1
+participant "inf1 : Unit" as Inf1
+participant "inf2 : Unit" as Inf2
+participant "army : Army" as Army
+
+== Building the army ==
+
+Client -> Factory : get("tank")
+activate Factory
+Factory -> TankFW ** : create (first call only)
+Factory --> Client : TankFlyweight instance
+deactivate Factory
+
+Client -> Factory : get("infantry")
+activate Factory
+Factory -> InfFW ** : create (first call only)
+Factory --> Client : InfantryFlyweight instance
+deactivate Factory
+
+Client -> Tank1 ** : Unit(x=0, y=0, flyweight=TankFlyweight)
+Client -> Inf1  ** : Unit(x=5, y=0, flyweight=InfantryFlyweight)
+Client -> Inf2  ** : Unit(x=10, y=0, flyweight=InfantryFlyweight)
+
+note over Tank1, Inf2
+  3 unit instances, but only 2 flyweight objects in memory.
+  infantry1 and infantry2 share the same InfantryFlyweight.
+end note
+
+Client -> Army : add(tank1), add(inf1), add(inf2)
+
+== Moving the army ==
+
+Client -> Army : move_all(10, 0)
+activate Army
+Army -> Tank1 : move(10, 0)
+Army -> Inf1  : move(10, 0)
+Army -> Inf2  : move(10, 0)
+deactivate Army
+
+== Rendering the army ==
+
+Client -> Army : render_all()
+activate Army
+
+Army -> Tank1 : render()
+activate Tank1
+Tank1 -> TankFW : render(x, y)
+activate TankFW
+TankFW --> Tank1 : draws texture + plays sounds
+deactivate TankFW
+deactivate Tank1
+
+Army -> Inf1 : render()
+activate Inf1
+Inf1 -> InfFW : render(x, y)
+activate InfFW
+InfFW --> Inf1 : draws texture + plays sounds
+deactivate InfFW
+deactivate Inf1
+
+Army -> Inf2 : render()
+activate Inf2
+Inf2 -> InfFW : render(x, y)
+activate InfFW
+InfFW --> Inf2 : same instance reused
+deactivate InfFW
+deactivate Inf2
+
+deactivate Army
+
+@enduml
