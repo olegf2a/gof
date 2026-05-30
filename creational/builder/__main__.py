@@ -1,6 +1,35 @@
 """Demo script for Builder pattern - Custom Pizza Builder"""
 
 from .pizza_builder import PizzaBuilder
+from .pizza_with_builder import Pizza
+
+
+def demo_inner_builder() -> None:
+    """Demonstrate the inner-class Builder variant"""
+    print("🍕 === Inner-class Builder Demo (Pizza.Builder) === 🍕\n")
+
+    margherita = (
+        Pizza.builder()
+        .with_size("medium")
+        .with_crust("thin")
+        .with_topping("mozzarella")
+        .with_topping("tomato sauce")
+        .with_topping("basil")
+        .build()
+    )
+    print(f"  {margherita}")
+    print(f"  Price: ${margherita.get_price():.2f}\n")
+
+    pepperoni = (
+        Pizza.builder()
+        .with_size("large")
+        .with_crust("regular")
+        .with_topping("mozzarella")
+        .with_topping("pepperoni")
+        .build()
+    )
+    print(f"  {pepperoni}")
+    print(f"  Price: ${pepperoni.get_price():.2f}\n")
 
 
 def main() -> None:
@@ -80,7 +109,11 @@ def main() -> None:
     print(f"🍕 {meat_pizza}")
     print(f"💰 Price: ${meat_pizza.get_price():.2f}\n")
 
-    print("5. Interactive Pizza Builder:")
+    print("5. Inner-class Builder variant:")
+    print("-" * 40)
+    demo_inner_builder()
+
+    print("6. Interactive Pizza Builder:")
     print("-" * 40)
 
     # Interactive demo
