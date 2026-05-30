@@ -1,0 +1,47 @@
+@startuml facade_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+
+actor Client
+
+participant "CalculatorFacade" as Facade
+participant "SoapService" as Service
+participant "RequestBuilder" as Builder
+participant "HttpClient" as Http
+participant "ResponseParser" as Parser
+
+Client -> Facade : add(5, 3)
+activate Facade
+
+Facade -> Service : calculate("Add", 5, 3)
+activate Service
+
+Service -> Builder : build("Add", 5, 3)
+activate Builder
+Builder --> Service : SOAP XML envelope
+deactivate Builder
+
+Service -> Http : post(envelope, "Add")
+activate Http
+Http --> Service : raw XML response
+deactivate Http
+
+Service -> Parser : parse("Add", xml)
+activate Parser
+Parser --> Service : 8
+deactivate Parser
+
+Service --> Facade : 8
+deactivate Service
+
+Facade --> Client : 8
+deactivate Facade
+
+note over Client, Parser
+  Client knows nothing about SOAP, HTTP, or XML.
+  All complexity is hidden behind the facade.
+end note
+
+@enduml

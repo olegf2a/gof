@@ -1,0 +1,79 @@
+@startuml proxy_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam SequenceGroupBorderColor #888888
+
+actor Client
+
+participant "CachingCalculatorProxy" as Proxy
+participant "_cache\ndict[tuple, int]" as Cache
+participant "CalculatorFacade\n(real subject)" as Facade
+participant "SOAP Service" as SOAP
+
+== First call — cache miss ==
+
+Client -> Proxy : add(5, 3)
+activate Proxy
+
+Proxy -> Cache : lookup ("add", 5, 3)
+activate Cache
+Cache --> Proxy : miss
+deactivate Cache
+
+Proxy -> Facade : add(5, 3)
+activate Facade
+Facade -> SOAP : HTTP POST (SOAP envelope)
+activate SOAP
+SOAP --> Facade : XML response
+deactivate SOAP
+Facade --> Proxy : 8
+deactivate Facade
+
+Proxy -> Cache : store ("add", 5, 3) → 8
+Proxy --> Client : 8
+deactivate Proxy
+
+== Second call — cache hit (same arguments) ==
+
+Client -> Proxy : add(5, 3)
+activate Proxy
+
+Proxy -> Cache : lookup ("add", 5, 3)
+activate Cache
+Cache --> Proxy : hit → 8
+deactivate Cache
+
+note over Proxy, Facade
+  Facade and SOAP service are NOT called.
+  Result returned directly from cache.
+end note
+
+Proxy --> Client : 8
+deactivate Proxy
+
+== Different arguments — cache miss again ==
+
+Client -> Proxy : add(10, 2)
+activate Proxy
+
+Proxy -> Cache : lookup ("add", 10, 2)
+activate Cache
+Cache --> Proxy : miss
+deactivate Cache
+
+Proxy -> Facade : add(10, 2)
+activate Facade
+Facade -> SOAP : HTTP POST (SOAP envelope)
+activate SOAP
+SOAP --> Facade : XML response
+deactivate SOAP
+Facade --> Proxy : 12
+deactivate Facade
+
+Proxy -> Cache : store ("add", 10, 2) → 12
+Proxy --> Client : 12
+deactivate Proxy
+
+@enduml

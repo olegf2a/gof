@@ -1,0 +1,82 @@
+PROXY PATTERN — Caching Calculator Proxy
+══════════════════════════════════════════════════════════════
+
+  TASK: Wrap the CalculatorFacade with a caching proxy that
+        returns a stored result on repeated calls instead of
+        forwarding to the SOAP service again.
+        No cache invalidation or TTL required.
+
+  SHARED INTERFACE (structural/facade/calculator.py)
+  ─────────────────────────────────────────────────────
+  Calculator  (ABC)
+  + add(a: int, b: int)       → int
+  + subtract(a: int, b: int)  → int
+  + multiply(a: int, b: int)  → int
+  + divide(a: int, b: int)    → int
+
+  Both CalculatorFacade and CachingCalculatorProxy implement
+  this interface — client code needs no changes to swap them.
+
+  REAL SUBJECT (structural/facade/calculator_facade.py)
+  ─────────────────────────────────────────────────────
+  CalculatorFacade(Calculator)
+    → unchanged, now explicitly implements Calculator ABC
+
+  PROXY (structural/proxy/calculator_proxy.py)
+  ─────────────────────────────────────────────────────
+  CachingCalculatorProxy(Calculator)
+  - _subject : Calculator
+  - _cache   : dict[tuple[str, int, int], int]
+
+  + add(a, b)       → int
+  + subtract(a, b)  → int
+  + multiply(a, b)  → int
+  + divide(a, b)    → int
+
+  Each method follows the same logic:
+    key = (operation, a, b)
+    if key in _cache  → return _cache[key]          (cache hit)
+    result = _subject.operation(a, b)               (cache miss)
+    _cache[key] = result
+    return result
+
+  Cache key examples:
+    ("add",      5, 3) → 8
+    ("subtract", 10, 4) → 6
+    ("multiply", 3, 7) → 21
+    ("divide",   20, 4) → 5
+
+  Call flow — first call (cache miss):
+  ──────────────────────────────────────────────────────────
+  client → proxy.add(5, 3)
+             key = ("add", 5, 3) not in cache
+             → facade.add(5, 3)
+                 → RequestBuilder.build("Add", 5, 3)
+                 → SoapClient.call(envelope)
+                 → ResponseParser.parse("Add", xml)
+                 → 8
+             cache[("add", 5, 3)] = 8
+             → return 8
+
+  Call flow — repeated call (cache hit):
+  ──────────────────────────────────────────────────────────
+  client → proxy.add(5, 3)
+             key = ("add", 5, 3) found in cache
+             → return 8                 ← no SOAP call
+
+FILE STRUCTURE:
+  structural/
+  ├── facade/
+  │   ├── calculator.py        ← Calculator ABC  (NEW — shared interface)
+  │   └── calculator_facade.py ← now implements Calculator
+  └── proxy/
+      ├── __init__.py
+      ├── __main__.py          ← demo (shows cache hit vs miss)
+      ├── module_schema.txt
+      ├── calculator_proxy.py  ← CachingCalculatorProxy
+      ├── uml/
+      │   ├── proxy_schema.puml
+      │   └── proxy_flow.puml
+      └── tests/
+          ├── __init__.py
+          └── test_proxy.py

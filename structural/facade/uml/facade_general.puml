@@ -1,0 +1,47 @@
+@startuml facade_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+}
+
+package "Facade" {
+  class Facade {
+    + operation() : result
+  }
+}
+
+package "Subsystems (hidden)" {
+  class SubsystemA {
+    + step1() : void
+  }
+  class SubsystemB {
+    + step2() : void
+  }
+  class SubsystemC {
+    + step3() : result
+  }
+}
+
+Client --> Facade      : simple call
+Facade --> SubsystemA  : coordinates
+Facade --> SubsystemB  : coordinates
+Facade --> SubsystemC  : coordinates
+
+note right of Facade
+  Provides a simple interface.
+  Client is unaware of subsystems.
+end note
+
+note bottom of SubsystemA
+  Subsystems can be complex
+  and know nothing about
+  the Facade.
+end note
+
+@enduml
