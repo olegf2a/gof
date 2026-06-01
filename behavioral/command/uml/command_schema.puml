@@ -1,0 +1,122 @@
+@startuml command_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client" {
+  class "__main__" as Main {
+    + demo() : None
+  }
+}
+
+package "Invoker" {
+  abstract class Invoker {
+    + run(cmd: Command) : None  {abstract}
+    + undo()            : None  {abstract}
+  }
+
+  class Order {
+    - _receiver : Receiver
+    - _history  : list[Command]
+    + run(cmd: Command) : None
+    + undo()            : None
+    + describe()        : str
+  }
+
+  Invoker <|-- Order
+}
+
+package "Command" {
+  abstract class Command {
+    + execute() : None  {abstract}
+    + undo()    : None  {abstract}
+  }
+
+  class AddTopping {
+    - _receiver : Receiver
+    - _context  : str
+    + execute() : None
+    + undo()    : None
+  }
+
+  class RemoveTopping {
+    - _receiver : Receiver
+    - _context  : str
+    + execute() : None
+    + undo()    : None
+  }
+
+  class ClearTopping {
+    - _receiver : Receiver
+    - _actions  : list[str]
+    + execute() : None
+    + undo()    : None
+  }
+
+  class ItalianCustomToppings {
+    - _receiver : Receiver
+    + execute() : None
+    + undo()    : None
+  }
+
+  Command <|-- AddTopping
+  Command <|-- RemoveTopping
+  Command <|-- ClearTopping
+  Command <|-- ItalianCustomToppings
+}
+
+package "Receiver" {
+  abstract class Receiver {
+    + action(context: str)         : None      {abstract}
+    + reverse_action(context: str) : None      {abstract}
+    + clear_actions()              : None      {abstract}
+    + get_actions()                : list[str] {abstract}
+    + describe()                   : str       {abstract}
+  }
+
+  class Pizza {
+    - _toppings : list[str]
+    + action(context: str)         : None
+    + reverse_action(context: str) : None
+    + clear_actions()              : None
+    + get_actions()                : list[str]
+    + describe()                   : str
+  }
+
+  Receiver <|-- Pizza
+}
+
+Main              -->  Order       : creates & drives
+Main              -->  Pizza       : creates
+Main              -->  Command     : creates commands
+Order             *--  Command     : stores history
+Order             o--> Receiver    : holds
+AddTopping        o--> Receiver    : action / reverse_action
+RemoveTopping     o--> Receiver    : reverse_action / action
+ClearTopping      o--> Receiver    : clear_actions / get_actions
+ItalianCustomToppings o--> Receiver : action / reverse_action
+
+note right of Order
+  run(cmd) executes cmd,
+  appends to history.
+  Client is responsible
+  for creating commands.
+end note
+
+note right of ClearTopping
+  execute() saves snapshot
+  via get_actions(), then clears.
+  undo() restores from snapshot.
+end note
+
+legend right
+  <|--  inheritance
+  *--   composition (owns)
+  o-->  aggregation (references)
+  -->   association
+end legend
+
+@enduml

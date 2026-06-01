@@ -1,0 +1,133 @@
+COMMAND PATTERN — Custom Pizza Order
+══════════════════════════════════════════════════════════════
+
+  TASK: Build a custom pizza by running reversible command objects.
+        The client creates each command and passes it to the invoker.
+        Commands: AddTopping, RemoveTopping, ClearTopping,
+                  ItalianCustomToppings (batch)
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  Receiver  → Pizza          (knows how to add/remove/clear toppings)
+  Command   → Command ABC    (encapsulates one operation)
+  Invoker   → Order          (executes commands, maintains history, supports undo)
+  Client    → __main__.py    (creates command objects, passes to order.run())
+
+  RECEIVER
+  ─────────────────────────────────────────────────────────
+  Receiver  (ABC)
+  + action(context: str)         → None  {abstract}
+  + reverse_action(context: str) → None  {abstract}
+  + clear_actions()              → None  {abstract}
+  + get_actions()                → list[str]  {abstract}
+  + describe()                   → str   {abstract}
+
+  Pizza(Receiver)
+  - _toppings : list[str]
+  + action(context: str)         → _toppings.append(context)
+  + reverse_action(context: str) → _toppings.remove(context)
+  + clear_actions()              → _toppings[:] = []
+  + get_actions()                → list[str]  (copy)
+  + describe()                   → str
+
+  COMMAND
+  ─────────────────────────────────────────────────────────
+  Command  (ABC)
+  + execute() → None  {abstract}
+  + undo()    → None  {abstract}
+
+  AddTopping(Command)
+  - _receiver : Receiver
+  - _context  : str
+  + execute() → receiver.action(_context)
+  + undo()    → receiver.reverse_action(_context)
+
+  RemoveTopping(Command)
+  - _receiver : Receiver
+  - _context  : str
+  + execute() → receiver.reverse_action(_context)
+  + undo()    → receiver.action(_context)
+
+  ClearTopping(Command)
+  - _receiver : Receiver
+  - _actions  : list[str]   ← snapshot saved on execute
+  + execute() → _actions = receiver.get_actions(); receiver.clear_actions()
+  + undo()    → receiver.action(a) for a in _actions; _actions.clear()
+
+  ItalianCustomToppings(Command)
+  - _receiver : Receiver
+  + execute() → receiver.action("Mozzarella"), action("Olives"), action("Tomatoes")
+  + undo()    → receiver.reverse_action("Mozzarella"), ("Olives"), ("Tomatoes")
+
+  INVOKER
+  ─────────────────────────────────────────────────────────
+  Invoker  (ABC)
+  + run(cmd: Command) → None  {abstract}
+  + undo()            → None  {abstract}
+
+  Order(Invoker)
+  - _receiver : Receiver
+  - _history  : list[Command]
+  + run(cmd: Command) → cmd.execute(); _history.append(cmd)
+  + undo()            → _history.pop().undo()  (no-op if empty)
+  + describe()        → str  delegates to receiver.describe()
+
+  Call flow — add toppings:
+  ──────────────────────────────────────────────────────────
+  cmd = AddTopping(pizza, "cheese")
+  order.run(cmd)
+    → cmd.execute()              → pizza.action("cheese")
+    → _history.append(cmd)
+
+  cmd = AddTopping(pizza, "bacon")
+  order.run(cmd)
+    → cmd.execute()              → pizza.action("bacon")
+    → _history.append(cmd)
+
+  order.describe()  →  "Base Pizza, cheese, bacon"
+
+  Call flow — undo:
+  ──────────────────────────────────────────────────────────
+  order.undo()
+    → cmd = _history.pop()       ← last command (bacon)
+    → cmd.undo()                 → pizza.reverse_action("bacon")
+
+  order.describe()  →  "Base Pizza, cheese"
+
+  Call flow — clear + undo (snapshot):
+  ──────────────────────────────────────────────────────────
+  cmd = ClearTopping(pizza)
+  order.run(cmd)
+    → cmd._actions = pizza.get_actions()   ← ["cheese"]
+    → pizza.clear_actions()
+    → _history.append(cmd)
+
+  order.undo()
+    → cmd = _history.pop()
+    → cmd.undo()                 → pizza.action("cheese")
+
+  order.describe()  →  "Base Pizza, cheese"
+
+FILE STRUCTURE:
+  behavioral/command/
+  ├── __init__.py
+  ├── __main__.py                    ← demo
+  ├── module_schema.txt
+  ├── command.py                     ← Command ABC
+  ├── receiver.py                    ← Receiver ABC
+  ├── invoker.py                     ← Invoker ABC
+  ├── pizza.py                       ← Pizza (receiver)
+  ├── order.py                       ← Order (invoker)
+  ├── commands/
+  │   ├── __init__.py
+  │   ├── add_topping.py             ← AddTopping
+  │   ├── remove_topping.py          ← RemoveTopping
+  │   ├── clear_topping.py           ← ClearTopping (snapshot-based undo)
+  │   └── italian_custom_toppings.py ← ItalianCustomToppings (batch)
+  ├── uml/
+  │   ├── command_general.puml       ← abstract pattern diagram
+  │   ├── command_schema.puml        ← structural class diagram
+  │   └── command_flow.puml          ← sequence diagram
+  └── tests/
+      ├── __init__.py
+      └── test_command.py

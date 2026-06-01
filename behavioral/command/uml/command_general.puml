@@ -1,0 +1,70 @@
+@startuml command_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+}
+
+package "Command" {
+  abstract class Command {
+    + execute() : None  {abstract}
+    + undo()    : None  {abstract}
+  }
+
+  class ConcreteCommand {
+    - _receiver : Receiver
+    + execute() : None
+    + undo()    : None
+  }
+
+  Command <|-- ConcreteCommand
+}
+
+package "Invoker" {
+  class Invoker {
+    - _history : list[Command]
+    + run(command: Command) : None
+    + undo() : None
+  }
+}
+
+package "Receiver" {
+  class Receiver {
+    + action() : None
+    + reverse_action() : None
+  }
+}
+
+Client      --> Invoker         : submits commands
+Client      --> ConcreteCommand : creates
+ConcreteCommand o--> Receiver   : calls action on
+Invoker     *--  Command        : stores history
+
+note right of Invoker
+  Executes commands and
+  keeps history for undo.
+end note
+
+note right of Command
+  Encapsulates a request
+  as an object.
+end note
+
+note right of Receiver
+  Knows how to perform
+  the actual work.
+end note
+
+legend right
+  <|--  inheritance
+  *--   composition (owns)
+  o-->  aggregation (references)
+  -->   association
+end legend
+
+@enduml

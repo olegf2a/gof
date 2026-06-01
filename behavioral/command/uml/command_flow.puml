@@ -1,0 +1,103 @@
+@startuml command_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam sequenceLifeLineBorderColor #888888
+
+participant "__main__"           as Main
+participant "order : Order"      as Order
+participant "cmd : Command"      as Cmd
+participant "pizza : Pizza"      as Pizza
+
+== Setup ==
+
+Main -> Pizza : <<create>> Pizza()
+Main -> Order : <<create>> Order(pizza)
+
+== Add toppings (client creates commands) ==
+
+Main -> Cmd   : <<create>> AddTopping(pizza, "cheese")
+Main -> Order : run(cmd)
+activate Order
+  Order -> Cmd : execute()
+  activate Cmd
+    Cmd -> Pizza : action("cheese")
+    activate Pizza
+      Pizza --> Cmd : [_toppings = ["cheese"]]
+    deactivate Pizza
+  deactivate Cmd
+  Order -> Order : _history.append(cmd)
+deactivate Order
+
+Main -> Cmd   : <<create>> AddTopping(pizza, "bacon")
+Main -> Order : run(cmd)
+activate Order
+  Order -> Cmd : execute()
+  activate Cmd
+    Cmd -> Pizza : action("bacon")
+    activate Pizza
+      Pizza --> Cmd : [_toppings = ["cheese", "bacon"]]
+    deactivate Pizza
+  deactivate Cmd
+  Order -> Order : _history.append(cmd)
+deactivate Order
+
+== Batch command ==
+
+Main -> Cmd   : <<create>> ItalianCustomToppings(pizza)
+Main -> Order : run(cmd)
+activate Order
+  Order -> Cmd : execute()
+  activate Cmd
+    Cmd -> Pizza : action("Mozzarella")
+    Cmd -> Pizza : action("Olives")
+    Cmd -> Pizza : action("Tomatoes")
+    Pizza --> Cmd : [_toppings = ["cheese", "bacon", "Mozzarella", "Olives", "Tomatoes"]]
+  deactivate Cmd
+  Order -> Order : _history.append(cmd)
+deactivate Order
+
+== Undo batch ==
+
+Main -> Order : undo()
+activate Order
+  Order -> Order : cmd = _history.pop()   [ItalianCustomToppings]
+  Order -> Cmd   : undo()
+  activate Cmd
+    Cmd -> Pizza : reverse_action("Mozzarella")
+    Cmd -> Pizza : reverse_action("Olives")
+    Cmd -> Pizza : reverse_action("Tomatoes")
+    Pizza --> Cmd : [_toppings = ["cheese", "bacon"]]
+  deactivate Cmd
+deactivate Order
+
+== Clear all (snapshot + restore) ==
+
+Main -> Cmd   : <<create>> ClearTopping(pizza)
+Main -> Order : run(cmd)
+activate Order
+  Order -> Cmd : execute()
+  activate Cmd
+    Cmd -> Pizza : get_actions()
+    Pizza --> Cmd : ["cheese", "bacon"]   (saved as snapshot)
+    Cmd -> Pizza : clear_actions()
+    Pizza --> Cmd : [_toppings = []]
+  deactivate Cmd
+  Order -> Order : _history.append(cmd)
+deactivate Order
+
+== Undo clear (restore from snapshot) ==
+
+Main -> Order : undo()
+activate Order
+  Order -> Order : cmd = _history.pop()   [ClearTopping]
+  Order -> Cmd   : undo()
+  activate Cmd
+    Cmd -> Pizza : action("cheese")
+    Cmd -> Pizza : action("bacon")
+    Pizza --> Cmd : [_toppings = ["cheese", "bacon"]]
+  deactivate Cmd
+deactivate Order
+
+@enduml
