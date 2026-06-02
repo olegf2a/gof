@@ -1,0 +1,86 @@
+@startuml iterator_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+}
+
+package "Iterator" {
+  abstract class Iterator {
+    + __iter__()   : Iterator  {abstract}
+    + __next__()   : Element   {abstract}
+    + has_next()   : bool      {abstract}
+  }
+
+  class ConcreteIteratorA {
+    - _items : list[Element]
+    - _index : int
+    + __iter__()   : Iterator
+    + __next__()   : Element
+    + has_next()   : bool
+  }
+
+  class ConcreteIteratorB {
+    - _items : list[Element]
+    - _index : int
+    + __iter__()   : Iterator
+    + __next__()   : Element
+    + has_next()   : bool
+  }
+
+  Iterator <|-- ConcreteIteratorA
+  Iterator <|-- ConcreteIteratorB
+}
+
+package "Collection" {
+  abstract class Iterable {
+    + create_iterator(order: str) : Iterator  {abstract}
+  }
+
+  class ConcreteCollection {
+    - _items : list[Element]
+    + add(item: Element)          : None
+    + create_iterator(order: str) : Iterator
+  }
+
+  Iterable <|-- ConcreteCollection
+}
+
+Client           --> Iterable           : calls create_iterator()
+Client           --> Iterator           : uses for traversal
+Iterable         --> Iterator           : creates
+ConcreteCollection ..> ConcreteIteratorA : <<creates>>
+ConcreteCollection ..> ConcreteIteratorB : <<creates>>
+ConcreteIteratorA  --> ConcreteCollection : reads items
+ConcreteIteratorB  --> ConcreteCollection : reads items
+
+note right of Iterator
+  Defines the traversal protocol.
+  __iter__ / __next__ integrates
+  with Python's for-loop natively.
+end note
+
+note right of ConcreteCollection
+  create_iterator(order) selects
+  the correct sort strategy and
+  returns the matching iterator.
+end note
+
+note right of ConcreteIteratorA
+  Each iterator holds an
+  independently sorted copy —
+  the collection is not modified.
+end note
+
+legend right
+  <|--  inheritance
+  ..>   dependency (creates)
+  -->   association / usage
+end legend
+
+@enduml

@@ -1,0 +1,118 @@
+ITERATOR PATTERN — Book Collection with Sort Iterators
+══════════════════════════════════════════════════════════════
+
+  TASK: Given a list of books (author, title, year), provide three
+        iterators that traverse the collection in ascending order
+        by each field independently — without exposing the
+        underlying list or sort logic to the client.
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  Iterator          → Iterator ABC          (defines iteration protocol)
+  ConcreteIterator  → AuthorIterator        (ascending by author)
+                    → TitleIterator         (ascending by title)
+                    → YearIterator          (ascending by year)
+  Iterable          → Iterable ABC          (defines create_iterator())
+  Collection        → BookCollection        (holds books, creates iterators)
+  Element           → Book                  (dataclass: author, title, year)
+  Client            → __main__.py
+
+  ITERATOR
+  ─────────────────────────────────────────────────────────
+  Iterator  (ABC)
+  + __iter__()         → Iterator  {abstract}
+  + __next__()         → Book      {abstract}
+  + has_next()         → bool      {abstract}
+
+  AuthorIterator(Iterator)
+  - _books   : list[Book]   ← sorted copy by author ascending
+  - _index   : int = 0
+  + __iter__()         → self
+  + __next__()         → Book  (raises StopIteration when exhausted)
+  + has_next()         → bool
+
+  TitleIterator(Iterator)
+  - _books   : list[Book]   ← sorted copy by title ascending
+  - _index   : int = 0
+  + __iter__()         → self
+  + __next__()         → Book
+  + has_next()         → bool
+
+  YearIterator(Iterator)
+  - _books   : list[Book]   ← sorted copy by year ascending
+  - _index   : int = 0
+  + __iter__()         → self
+  + __next__()         → Book
+  + has_next()         → bool
+
+  ITERABLE
+  ─────────────────────────────────────────────────────────
+  Iterable  (ABC)
+  + create_iterator(order: str) → Iterator  {abstract}
+
+  BookCollection(Iterable)
+  - _books : list[Book]
+  + add(book: Book)                     → None
+  + create_iterator(order: str)         → Iterator
+      "author" → AuthorIterator(_books)
+      "title"  → TitleIterator(_books)
+      "year"   → YearIterator(_books)
+
+  ELEMENT
+  ─────────────────────────────────────────────────────────
+  Book  (dataclass)
+  - author : str
+  - title  : str
+  - year   : int
+
+  Call flow — iterate by year:
+  ──────────────────────────────────────────────────────────
+  collection = BookCollection()
+  collection.add(Book("Orwell",  "1984",              1949))
+  collection.add(Book("Tolkien", "The Hobbit",         1937))
+  collection.add(Book("Huxley",  "Brave New World",    1932))
+
+  it = collection.create_iterator("year")
+  for book in it:
+      print(book)
+    → Book("Huxley",  "Brave New World",  1932)
+    → Book("Tolkien", "The Hobbit",        1937)
+    → Book("Orwell",  "1984",              1949)
+
+  Call flow — iterate by author:
+  ──────────────────────────────────────────────────────────
+  it = collection.create_iterator("author")
+  for book in it:
+      print(book)
+    → Book("Huxley",  "Brave New World",  1932)
+    → Book("Orwell",  "1984",             1949)
+    → Book("Tolkien", "The Hobbit",        1937)
+
+  Call flow — iterate by title:
+  ──────────────────────────────────────────────────────────
+  it = collection.create_iterator("title")
+  for book in it:
+      print(book)
+    → Book("Orwell",  "1984",             1949)
+    → Book("Huxley",  "Brave New World",  1932)
+    → Book("Tolkien", "The Hobbit",        1937)
+
+FILE STRUCTURE:
+  behavioral/iterator/
+  ├── __init__.py
+  ├── __main__.py                  ← demo: all three iterators
+  ├── module_schema.txt
+  ├── iterator.py                  ← Iterator ABC
+  ├── iterable.py                  ← Iterable ABC
+  ├── book.py                      ← Book (dataclass)
+  ├── book_collection.py           ← BookCollection (concrete collection)
+  ├── iterators/
+  │   ├── __init__.py
+  │   ├── author_iterator.py       ← AuthorIterator (sorted by author)
+  │   ├── title_iterator.py        ← TitleIterator  (sorted by title)
+  │   └── year_iterator.py         ← YearIterator   (sorted by year)
+  ├── uml/
+  │   └── iterator_general.puml    ← abstract pattern diagram
+  └── tests/
+      ├── __init__.py
+      └── test_iterator.py
