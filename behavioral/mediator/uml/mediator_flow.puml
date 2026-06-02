@@ -1,0 +1,63 @@
+@startuml mediator_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam sequenceLifeLineBorderColor #888888
+
+participant "guest : Guest"                   as Guest
+participant "mediator : ConciergeMediator"    as Mediator
+participant "taxi : TaxiService"              as Taxi
+participant "master : MasterService"          as Master
+participant "flowers : FlowerDelivery"        as Flowers
+
+== Setup ==
+
+[-> Mediator : <<create>> ConciergeMediator(guest, taxi, master, flowers)
+activate Mediator
+  Mediator -> Guest    : set_mediator(self)
+  Mediator -> Taxi     : set_mediator(self)
+  Mediator -> Master   : set_mediator(self)
+  Mediator -> Flowers  : set_mediator(self)
+deactivate Mediator
+
+== Request: taxi ==
+
+Guest -> Mediator : notify(guest, "taxi")
+activate Mediator
+  Mediator -> Taxi : handle()
+  activate Taxi
+    Taxi -> Mediator : notify(taxi, "taxi_done")
+    activate Mediator
+      Mediator -> Guest : receive("Taxi is on its way")
+    deactivate Mediator
+  deactivate Taxi
+deactivate Mediator
+
+== Request: master ==
+
+Guest -> Mediator : notify(guest, "master")
+activate Mediator
+  Mediator -> Master : handle()
+  activate Master
+    Master -> Mediator : notify(master, "master_done")
+    activate Mediator
+      Mediator -> Guest : receive("Master will arrive shortly")
+    deactivate Mediator
+  deactivate Master
+deactivate Mediator
+
+== Request: flowers ==
+
+Guest -> Mediator : notify(guest, "flowers")
+activate Mediator
+  Mediator -> Flowers : handle()
+  activate Flowers
+    Flowers -> Mediator : notify(flowers, "flowers_done")
+    activate Mediator
+      Mediator -> Guest : receive("Flowers are on their way")
+    deactivate Mediator
+  deactivate Flowers
+deactivate Mediator
+
+@enduml

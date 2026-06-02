@@ -1,0 +1,84 @@
+@startuml mediator_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Mediator" {
+  abstract class Mediator {
+    + notify(sender: MediatorElement, event: str) : None  {abstract}
+  }
+
+  class ConciergeMediator {
+    - _guest   : Guest
+    - _taxi    : TaxiService
+    - _master  : MasterService
+    - _flowers : FlowerDelivery
+    + notify(sender: MediatorElement, event: str) : None
+  }
+
+  Mediator <|-- ConciergeMediator
+}
+
+package "Colleagues" {
+  abstract class MediatorElement {
+    - _mediator : Mediator
+    + set_mediator(mediator: Mediator) : None
+  }
+
+  class Guest {
+    + request(service: str) : None
+    + receive(message: str) : None
+  }
+
+  class TaxiService {
+    + handle() : None
+  }
+
+  class MasterService {
+    + handle() : None
+  }
+
+  class FlowerDelivery {
+    + handle() : None
+  }
+
+  MediatorElement <|-- Guest
+  MediatorElement <|-- TaxiService
+  MediatorElement <|-- MasterService
+  MediatorElement <|-- FlowerDelivery
+}
+
+ConciergeMediator o--> Guest          : notifies on *_done
+ConciergeMediator o--> TaxiService    : handle()
+ConciergeMediator o--> MasterService  : handle()
+ConciergeMediator o--> FlowerDelivery : handle()
+Guest             --> Mediator        : notify(self, "taxi"|"master"|"flowers")
+TaxiService       --> Mediator        : notify(self, "taxi_done")
+MasterService     --> Mediator        : notify(self, "master_done")
+FlowerDelivery    --> Mediator        : notify(self, "flowers_done")
+
+note right of ConciergeMediator
+  "taxi"         → taxi.handle()
+  "master"       → master.handle()
+  "flowers"      → flowers.handle()
+  "taxi_done"    → guest.receive(...)
+  "master_done"  → guest.receive(...)
+  "flowers_done" → guest.receive(...)
+end note
+
+note right of Guest
+  Never references TaxiService,
+  MasterService, or FlowerDelivery.
+  Only knows the mediator.
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (references)
+  -->   association / usage
+end legend
+
+@enduml
