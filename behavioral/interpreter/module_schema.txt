@@ -1,0 +1,88 @@
+INTERPRETER PATTERN — Custom Pizza Recipe String
+══════════════════════════════════════════════════════════════
+
+  TASK: Parse a custom pizza recipe from a plain string and
+        execute it using Command pattern objects under the hood.
+        Grammar:  recipe      → instruction (, instruction)*
+                  instruction → "add:<topping>" | "undo"
+        Example:  "add:cheese, add:bacon, undo, add:mushroom"
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  AbstractExpression → Expression ABC     (defines interpret(ctx))
+  TerminalExpression → AddExpression      (handles "add:<topping>")
+                     → UndoExpression     (handles "undo")
+  NonterminalExpr    → RecipeExpression   (sequence of expressions)
+  Context            → Context            (wraps Invoker + Receiver via DI)
+  Client / Parser    → parser.py          (string → AST)
+  Entry point        → __main__.py
+
+  EXPRESSION
+  ─────────────────────────────────────────────────────────
+  AbstractExpression  (ABC)
+  + interpret(context: Context) → None  {abstract}
+
+  AddExpression(AbstractExpression)           ← TerminalExpression
+  - _topping : str
+  + interpret(context: Context) → context.add(_topping)
+
+  UndoExpression(AbstractExpression)          ← TerminalExpression
+  + interpret(context: Context) → context.undo()
+
+  RecipeExpression(AbstractExpression)        ← NonterminalExpression
+  - _expressions : list[AbstractExpression]
+  + interpret(context: Context) → calls interpret(ctx) on each child
+
+  CONTEXT  (Dependency-injected)
+  ─────────────────────────────────────────────────────────
+  Context
+  - _invoker  : Invoker    (command.Order — manages undo history)
+  - _receiver : Receiver   (command.Pizza — the object being acted on)
+  + add(topping: str) → builds AddTopping command, runs via invoker
+  + undo()            → delegates to invoker.undo()
+  + describe() → str  → delegates to receiver.describe()
+
+  PARSER  (Client-side AST builder)
+  ─────────────────────────────────────────────────────────
+  parse(text: str) → RecipeExpression
+    splits text by ","
+    "add:<topping>"  → AddExpression(topping)
+    "undo"           → UndoExpression()
+    wraps list in RecipeExpression
+
+  Call flow — interpreting "add:cheese, add:bacon, undo":
+  ──────────────────────────────────────────────────────────
+  recipe = parse("add:cheese, add:bacon, undo")
+    → RecipeExpression([
+          AddExpression("cheese"),
+          AddExpression("bacon"),
+          UndoExpression()
+      ])
+
+  receiver = Pizza()
+  ctx = Context(Order(receiver), receiver)
+  recipe.interpret(ctx)
+    → AddExpression("cheese").interpret(ctx)  → ctx.add("cheese")
+    → AddExpression("bacon").interpret(ctx)   → ctx.add("bacon")
+    → UndoExpression().interpret(ctx)         → ctx.undo()
+
+  ctx.describe()  →  "Base Pizza, cheese"
+
+FILE STRUCTURE:
+  behavioral/interpreter/
+  ├── __init__.py
+  ├── __main__.py                  ← demo: parse & interpret recipe string
+  ├── module_schema.txt
+  ├── expression.py                ← AbstractExpression ABC
+  ├── context.py                   ← Context (DI: Invoker + Receiver)
+  ├── parser.py                    ← string → RecipeExpression AST
+  ├── expressions/
+  │   ├── __init__.py
+  │   ├── add_expression.py        ← TerminalExpression for add:<topping>
+  │   ├── undo_expression.py       ← TerminalExpression for undo
+  │   └── recipe_expression.py     ← NonterminalExpression (sequence)
+  ├── uml/
+  │   └── interpreter_general.puml ← abstract pattern diagram
+  └── tests/
+      ├── __init__.py
+      └── test_interpreter.py

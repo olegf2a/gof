@@ -1,0 +1,105 @@
+@startuml interpreter_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam sequenceLifeLineBorderColor #888888
+
+participant "__main__"                as Main
+participant "parser"                  as Parser
+participant "recipe : RecipeExpression" as Recipe
+participant "expr : AddExpression"    as AddExpr
+participant "expr : UndoExpression"   as UndoExpr
+participant "ctx : Context"           as Ctx
+participant "order : Order"           as Order
+participant "cmd : AddTopping"        as Cmd
+participant "pizza : Pizza"           as Pizza
+
+== Setup ==
+
+Main  -> Pizza  : <<create>> Pizza()
+Main  -> Order  : <<create>> Order(pizza)
+Main  -> Ctx    : <<create>> Context(order, pizza)
+
+== Parse recipe string ==
+
+Main   -> Parser  : parse("add:cheese, add:bacon, undo")
+activate Parser
+  Parser -> AddExpr  : <<create>> AddExpression("cheese")
+  Parser -> AddExpr  : <<create>> AddExpression("bacon")
+  Parser -> UndoExpr : <<create>> UndoExpression()
+  Parser -> Recipe   : <<create>> RecipeExpression([...])
+  Parser --> Main    : recipe
+deactivate Parser
+
+== Interpret ==
+
+Main -> Recipe : interpret(ctx)
+activate Recipe
+
+  Recipe -> AddExpr : interpret(ctx)   [AddExpression("cheese")]
+  activate AddExpr
+    AddExpr -> Ctx : add("cheese")
+    activate Ctx
+      Ctx -> Cmd   : <<create>> AddTopping(pizza, "cheese")
+      Ctx -> Order : run(cmd)
+      activate Order
+        Order -> Cmd  : execute()
+        activate Cmd
+          Cmd -> Pizza : action("cheese")
+          activate Pizza
+            Pizza --> Cmd : [_toppings = ["cheese"]]
+          deactivate Pizza
+        deactivate Cmd
+        Order -> Order : _history.append(cmd)
+      deactivate Order
+    deactivate Ctx
+  deactivate AddExpr
+
+  Recipe -> AddExpr : interpret(ctx)   [AddExpression("bacon")]
+  activate AddExpr
+    AddExpr -> Ctx : add("bacon")
+    activate Ctx
+      Ctx -> Cmd   : <<create>> AddTopping(pizza, "bacon")
+      Ctx -> Order : run(cmd)
+      activate Order
+        Order -> Cmd  : execute()
+        activate Cmd
+          Cmd -> Pizza : action("bacon")
+          activate Pizza
+            Pizza --> Cmd : [_toppings = ["cheese", "bacon"]]
+          deactivate Pizza
+        deactivate Cmd
+        Order -> Order : _history.append(cmd)
+      deactivate Order
+    deactivate Ctx
+  deactivate AddExpr
+
+  Recipe -> UndoExpr : interpret(ctx)   [UndoExpression]
+  activate UndoExpr
+    UndoExpr -> Ctx : undo()
+    activate Ctx
+      Ctx -> Order : undo()
+      activate Order
+        Order -> Order : cmd = _history.pop()   [AddTopping("bacon")]
+        Order -> Cmd   : undo()
+        activate Cmd
+          Cmd -> Pizza : reverse_action("bacon")
+          activate Pizza
+            Pizza --> Cmd : [_toppings = ["cheese"]]
+          deactivate Pizza
+        deactivate Cmd
+      deactivate Order
+    deactivate Ctx
+  deactivate UndoExpr
+
+deactivate Recipe
+
+== Result ==
+
+Main -> Ctx : describe()
+Ctx  -> Pizza : describe()
+Pizza --> Ctx : "Base Pizza, cheese"
+Ctx  --> Main : "Base Pizza, cheese"
+
+@enduml

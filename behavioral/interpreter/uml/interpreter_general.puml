@@ -1,0 +1,71 @@
+@startuml interpreter_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+  class Parser {
+    + parse(text: str) : AbstractExpression
+  }
+}
+
+package "Context" {
+  class Context {
+    + (global interpreter state)
+  }
+}
+
+package "Expression" {
+  abstract class AbstractExpression {
+    + interpret(context: Context) : None  {abstract}
+  }
+
+  class TerminalExpression {
+    + interpret(context: Context) : None
+  }
+
+  class NonterminalExpression {
+    - _expressions : list[AbstractExpression]
+    + interpret(context: Context) : None
+  }
+
+  AbstractExpression <|-- TerminalExpression
+  AbstractExpression <|-- NonterminalExpression
+  NonterminalExpression *-- AbstractExpression : contains (AST children)
+}
+
+Client      --> Parser              : asks to build AST
+Parser      --> AbstractExpression  : creates
+Client      --> Context             : creates
+Client      --> AbstractExpression  : calls interpret(context)
+TerminalExpression     --> Context  : reads / writes state
+NonterminalExpression  --> Context  : passes to children
+
+note right of NonterminalExpression
+  Represents grammar rules
+  composed of sub-expressions.
+  Calls interpret() on each child.
+end note
+
+note right of TerminalExpression
+  Leaf node — corresponds to
+  a terminal grammar symbol.
+  Performs the actual action.
+end note
+
+note right of Context
+  Carries global state
+  across all interpret() calls.
+end note
+
+legend right
+  <|--  inheritance
+  *--   composition (owns)
+  -->   association / usage
+end legend
+
+@enduml

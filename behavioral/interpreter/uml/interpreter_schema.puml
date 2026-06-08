@@ -1,0 +1,125 @@
+@startuml interpreter_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client" {
+  class "__main__" as Main {
+    + demo() : None
+  }
+  class Parser {
+    + parse(text: str) : RecipeExpression
+  }
+}
+
+package "Context" {
+  class Context {
+    - _invoker  : Invoker
+    - _receiver : Receiver
+    + add(topping: str) : None
+    + undo()            : None
+    + describe()        : str
+  }
+}
+
+package "Expression" {
+  abstract class AbstractExpression {
+    + interpret(context: Context) : None  {abstract}
+  }
+
+  class AddExpression {
+    - _topping : str
+    + interpret(context: Context) : None
+  }
+
+  class UndoExpression {
+    + interpret(context: Context) : None
+  }
+
+  class RecipeExpression {
+    - _expressions : list[AbstractExpression]
+    + interpret(context: Context) : None
+  }
+
+  AbstractExpression <|-- AddExpression
+  AbstractExpression <|-- UndoExpression
+  AbstractExpression <|-- RecipeExpression
+  RecipeExpression   *-- AbstractExpression : contains (AST children)
+}
+
+package "Command (reused)" {
+  abstract class Invoker {
+    + run(cmd: Command) : None  {abstract}
+    + undo()            : None  {abstract}
+  }
+
+  class Order {
+    - _receiver : Receiver
+    - _history  : list[Command]
+    + run(cmd: Command) : None
+    + undo()            : None
+    + describe()        : str
+  }
+
+  abstract class Receiver {
+    + action(context: str)         : None  {abstract}
+    + reverse_action(context: str) : None  {abstract}
+    + describe()                   : str   {abstract}
+  }
+
+  class Pizza {
+    - _toppings : list[str]
+    + action(context: str)         : None
+    + reverse_action(context: str) : None
+    + describe()                   : str
+  }
+
+  class AddTopping {
+    - _receiver : Receiver
+    - _context  : str
+    + execute() : None
+    + undo()    : None
+  }
+
+  Invoker  <|-- Order
+  Receiver <|-- Pizza
+}
+
+Main           -->  Parser           : parse(text)
+Main           -->  Pizza            : creates
+Main           -->  Order            : creates
+Main           -->  Context          : creates
+Parser         -->  AddExpression    : creates
+Parser         -->  UndoExpression   : creates
+Parser         -->  RecipeExpression : wraps in
+AddExpression  -->  Context          : context.add(topping)
+UndoExpression -->  Context          : context.undo()
+Context        o--> Invoker          : dispatches via
+Context        o--> Receiver         : describes / builds commands with
+Context        -->  AddTopping       : creates on add()
+Order          *--  AddTopping       : stores in history
+AddTopping     o--> Receiver         : action / reverse_action
+
+note right of Context
+  add(topping) builds an AddTopping
+  command and runs it via the invoker.
+  Expressions never touch commands
+  directly — only the Context does.
+end note
+
+note right of RecipeExpression
+  Non-terminal: iterates _expressions
+  and calls interpret(ctx) on each child.
+end note
+
+legend right
+  <|--  inheritance
+  *--   composition (owns)
+  o-->  aggregation (references)
+  -->   association / usage
+end legend
+
+@enduml
