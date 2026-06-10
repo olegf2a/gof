@@ -1,0 +1,84 @@
+@startuml memento_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client" {
+  class "__main__" as Main {
+    + demo() : None
+  }
+}
+
+package "Memento" {
+  abstract class Memento {
+    + get_content() : str  {abstract}
+  }
+
+  class TextSnapshot {
+    - _content : str
+    + get_content() : str
+  }
+
+  Memento <|-- TextSnapshot
+}
+
+package "Originator" {
+  abstract class Originator {
+    + save()                    : Memento  {abstract}
+    + restore(m: Memento)       : None     {abstract}
+  }
+
+  class TextEditor {
+    - _content : str
+    + content                   : str
+    + write(text: str)          : None
+    + save()                    : TextSnapshot
+    + restore(m: TextSnapshot)  : None
+  }
+
+  Originator <|-- TextEditor
+}
+
+package "Caretaker" {
+  class VersionHistory {
+    - _history : list[Memento]
+    + save(editor: Originator)             : None
+    + restore(editor: Originator, v: int)  : None
+    + history()                            : list[Memento]
+  }
+}
+
+Main               -->  TextEditor      : creates & writes
+Main               -->  VersionHistory  : drives save / restore
+VersionHistory     o--> Memento         : stores snapshots
+TextEditor         ..>  TextSnapshot    : <<creates>>
+TextEditor         ..>  TextSnapshot    : <<reads on restore>>
+
+note right of TextSnapshot
+  Concrete memento.
+  Content is set once
+  in __init__ — never mutated.
+end note
+
+note right of VersionHistory
+  Never reads snapshot content.
+  Only passes snapshots back
+  to the originator on restore.
+end note
+
+note right of TextEditor
+  save()    → wraps _content in TextSnapshot.
+  restore() → reads content via get_content().
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (stores)
+  ..>   dependency (creates / reads)
+  -->   association
+end legend
+
+@enduml

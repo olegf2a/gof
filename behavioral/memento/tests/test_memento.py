@@ -1,0 +1,119 @@
+import unittest
+
+from ..caretaker import VersionHistory
+from ..text_editor import TextEditor
+from ..text_snapshot import TextSnapshot
+
+
+class TestTextSnapshot(unittest.TestCase):
+    def test_stores_content(self) -> None:
+        snap = TextSnapshot("hello")
+        self.assertEqual(snap.get_content(), "hello")
+
+    def test_empty_content(self) -> None:
+        snap = TextSnapshot("")
+        self.assertEqual(snap.get_content(), "")
+
+    def test_independent_instances(self) -> None:
+        a = TextSnapshot("foo")
+        b = TextSnapshot("bar")
+        self.assertNotEqual(a.get_content(), b.get_content())
+
+
+class TestTextEditor(unittest.TestCase):
+    def setUp(self) -> None:
+        self.editor = TextEditor()
+
+    def test_initial_content_is_empty(self) -> None:
+        self.assertEqual(self.editor.content, "")
+
+    def test_write_sets_content(self) -> None:
+        self.editor.write("hello")
+        self.assertEqual(self.editor.content, "hello")
+
+    def test_write_replaces_content(self) -> None:
+        self.editor.write("first")
+        self.editor.write("second")
+        self.assertEqual(self.editor.content, "second")
+
+    def test_save_returns_snapshot_of_current_content(self) -> None:
+        self.editor.write("draft")
+        snap = self.editor.save()
+        self.assertEqual(snap.get_content(), "draft")
+
+    def test_save_is_independent_copy(self) -> None:
+        self.editor.write("original")
+        snap = self.editor.save()
+        self.editor.write("changed")
+        self.assertEqual(snap.get_content(), "original")
+
+    def test_restore_sets_content_from_snapshot(self) -> None:
+        self.editor.write("saved state")
+        snap = self.editor.save()
+        self.editor.write("new state")
+        self.editor.restore(snap)
+        self.assertEqual(self.editor.content, "saved state")
+
+
+class TestVersionHistory(unittest.TestCase):
+    def setUp(self) -> None:
+        self.editor = TextEditor()
+        self.history = VersionHistory()
+
+    def test_history_starts_empty(self) -> None:
+        self.assertEqual(self.history.history(), [])
+
+    def test_save_appends_snapshot(self) -> None:
+        self.editor.write("v1")
+        self.history.save(self.editor)
+        self.assertEqual(len(self.history.history()), 1)
+
+    def test_save_multiple_versions(self) -> None:
+        for text in ("v1", "v2", "v3"):
+            self.editor.write(text)
+            self.history.save(self.editor)
+        self.assertEqual(len(self.history.history()), 3)
+
+    def test_restore_by_index(self) -> None:
+        self.editor.write("first")
+        self.history.save(self.editor)
+        self.editor.write("second")
+        self.history.save(self.editor)
+
+        self.history.restore(self.editor, 0)
+        self.assertEqual(self.editor.content, "first")
+
+        self.history.restore(self.editor, 1)
+        self.assertEqual(self.editor.content, "second")
+
+    def test_restore_last_with_negative_index(self) -> None:
+        self.editor.write("first")
+        self.history.save(self.editor)
+        self.editor.write("last")
+        self.history.save(self.editor)
+
+        self.history.restore(self.editor, -1)
+        self.assertEqual(self.editor.content, "last")
+
+    def test_restore_invalid_version_raises(self) -> None:
+        self.editor.write("v1")
+        self.history.save(self.editor)
+        with self.assertRaises(RuntimeError):
+            self.history.restore(self.editor, 99)
+
+    def test_history_returns_copy(self) -> None:
+        self.editor.write("v1")
+        self.history.save(self.editor)
+        snapshot = self.history.history()
+        snapshot.clear()
+        self.assertEqual(len(self.history.history()), 1)
+
+    def test_snapshot_in_history_is_independent_of_editor(self) -> None:
+        self.editor.write("saved")
+        self.history.save(self.editor)
+        self.editor.write("changed")
+        self.assertEqual(self.history.history()[0].get_content(), "saved")
+
+
+if __name__ == "__main__":
+    unittest.main()

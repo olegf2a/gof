@@ -1,0 +1,127 @@
+MEMENTO PATTERN — Text Editor Versions
+══════════════════════════════════════════════════════════════
+
+  TASK: A text editor that saves snapshots of its content and can
+        restore any saved version by index — without exposing the
+        editor's internal state to the caretaker.
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  Memento            → Memento ABC       (defines get_content contract)
+  ConcreteMemento    → TextSnapshot      (stores immutable content string)
+  Originator         → Originator ABC    (defines save / restore contract)
+  ConcreteOriginator → TextEditor        (writes text, creates / consumes snapshots)
+  Caretaker          → VersionHistory    (stores snapshots, restores by version index)
+  Client             → __main__.py
+
+  MEMENTO
+  ─────────────────────────────────────────────────────────
+  Memento  (ABC)
+  + get_content() → str  {abstract}
+
+  TextSnapshot(Memento)
+  - _content : str
+  + get_content() → str
+
+  ORIGINATOR
+  ─────────────────────────────────────────────────────────
+  Originator  (ABC)
+  + save()                      → Memento  {abstract}
+  + restore(memento: Memento)   → None     {abstract}
+
+  TextEditor(Originator)
+  - _content : str
+  + write(text: str)            → None     (_content = text)
+  + save()                      → TextSnapshot(content=_content)
+  + restore(memento: TextSnapshot) → None  (_content = memento.get_content())
+
+  CARETAKER
+  ─────────────────────────────────────────────────────────
+  VersionHistory
+  - _history : list[Memento]
+  + save(editor: Originator)             → None               (calls editor.save(), appends snapshot)
+  + restore(editor: Originator, v: int)  → None               (calls editor.restore(_history[v]))
+  + history()                            → list[Memento]      (returns copy)
+
+  restore() wraps IndexError as RuntimeError("Version {v} does not exist")
+
+  Call flow — save versions:
+  ──────────────────────────────────────────────────────────
+  editor  = TextEditor()
+  history = VersionHistory()
+
+  editor.write("First draft.")
+  history.save(editor)                → _history[0] = TextSnapshot("First draft.")
+
+  editor.write("Second draft with edits.")
+  history.save(editor)                → _history[1] = TextSnapshot("Second draft with edits.")
+
+  editor.write("Final version.")
+  history.save(editor)                → _history[2] = TextSnapshot("Final version.")
+
+  Call flow — restore by version:
+  ──────────────────────────────────────────────────────────
+  history.restore(editor, 0)
+    → editor.restore(_history[0])     → editor._content = "First draft."
+
+  history.restore(editor, 1)
+    → editor.restore(_history[1])     → editor._content = "Second draft with edits."
+
+  history.restore(editor, 99)         → raises RuntimeError("Version 99 does not exist")
+
+FILE STRUCTURE:
+  behavioral/memento/
+  ├── __init__.py
+  ├── __main__.py              ← demo: write → save × 3 → restore by version
+  ├── module_schema.txt
+  ├── memento.py               ← Memento ABC
+  ├── text_snapshot.py         ← TextSnapshot (concrete memento)
+  ├── originator.py            ← Originator ABC
+  ├── text_editor.py           ← TextEditor (concrete originator)
+  ├── caretaker.py             ← VersionHistory (caretaker)
+  ├── uml/
+  │   ├── memento_general.puml ← abstract pattern diagram
+  │   ├── memento_schema.puml  ← structural class diagram
+  │   └── memento_flow.puml    ← sequence diagram
+  └── tests/
+      ├── __init__.py
+      └── test_memento.py
+
+DIFFERENCE FROM RELATED PATTERNS
+══════════════════════════════════════════════════════════════
+
+  ┌─────────────┬──────────────────────────────────────────────────────────────┐
+  │ Pattern     │ Intent                                                       │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Memento     │ Snapshots the originator's STATE so it can be restored       │
+  │             │ later. The caretaker stores snapshots but never reads them.  │
+  │             │ Undo is "go back to this exact state."                       │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Command     │ Encapsulates an OPERATION so it can be executed, queued,     │
+  │             │ or undone. Undo is "reverse this specific action." Each      │
+  │             │ command knows how to reverse itself — no full snapshot.      │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Key         │ Memento saves STATE (what it was).                           │
+  │ distinction │ Command saves INTENT (what was done and how to undo it).     │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ When to use │ Memento: when reversing the operation is impractical or      │
+  │ Memento     │ impossible (e.g. complex transformations, external state).   │
+  │             │ Restore any arbitrary version directly by index.             │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ When to use │ Command: when operations are well-defined and invertible.    │
+  │ Command     │ Undo walks history step-by-step; no full copies needed.      │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Combined    │ Command history + Memento snapshot: use Command for step     │
+  │             │ undo/redo, Memento for "save point" restore across many      │
+  │             │ operations at once.                                          │
+  └─────────────┴──────────────────────────────────────────────────────────────┘
+
+  ENCAPSULATION contrast:
+  ─────────────────────────────────────────────────────────
+  Command    — Caretaker (Order) keeps Command objects and calls undo().
+               Command knows how to reverse its own effect (reverse_action).
+               State is not copied — the receiver is mutated forward/backward.
+
+  Memento    — Caretaker (VersionHistory) keeps TextSnapshot objects but
+               never reads their content. Only the originator (TextEditor)
+               reads the snapshot on restore(). Full encapsulation of state.
