@@ -1,0 +1,65 @@
+@startuml mediator_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Mediator" {
+  abstract class Mediator {
+    + notify(sender: Colleague, event: str) : None  {abstract}
+  }
+
+  class ConcreteMediator {
+    - _colleague_a : ColleagueA
+    - _colleague_b : ColleagueB
+    + notify(sender: Colleague, event: str) : None
+  }
+
+  Mediator <|-- ConcreteMediator
+}
+
+package "Colleagues" {
+  abstract class Colleague {
+    - _mediator : Mediator
+    + set_mediator(mediator: Mediator) : None
+  }
+
+  class ColleagueA {
+    + do_a() : None
+  }
+
+  class ColleagueB {
+    + do_b() : None
+  }
+
+  Colleague <|-- ColleagueA
+  Colleague <|-- ColleagueB
+}
+
+ConcreteMediator o--> ColleagueA : coordinates
+ConcreteMediator o--> ColleagueB : coordinates
+ColleagueA       --> Mediator    : notify(self, event)
+ColleagueB       --> Mediator    : notify(self, event)
+
+note right of ConcreteMediator
+  Routes events between colleagues.
+  Each colleague only knows the
+  mediator — never each other.
+end note
+
+note right of Colleague
+  All communication goes through
+  the mediator. Colleagues are
+  completely decoupled from
+  one another.
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (references)
+  -->   association / usage
+end legend
+
+@enduml

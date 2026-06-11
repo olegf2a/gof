@@ -1,0 +1,92 @@
+MEDIATOR PATTERN — Concierge Service
+══════════════════════════════════════════════════════════════
+
+  TASK: A concierge service accepts requests from a guest and
+        dispatches them to the appropriate service — taxi call,
+        home master, or flower delivery. Services notify the
+        guest upon completion. No colleague knows about any
+        other colleague directly; all communication goes
+        through the mediator.
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  Mediator         → Mediator ABC          (defines notify interface)
+  ConcreteMediator → ConciergeMediator     (routes events between colleagues)
+  Colleague        → Colleague ABC         (holds mediator reference)
+  Sender/Client    → Guest                 (initiates requests)
+  ConcreteColleague→ TaxiService           (handles "taxi" requests)
+                   → MasterService         (handles "master" requests)
+                   → FlowerDelivery        (handles "flowers" requests)
+
+  MEDIATOR
+  ─────────────────────────────────────────────────────────
+  Mediator  (ABC)
+  + notify(sender: Colleague, event: str) → None  {abstract}
+
+  ConciergeMediator(Mediator)
+  - _guest           : Guest
+  - _taxi            : TaxiService
+  - _master          : MasterService
+  - _flowers         : FlowerDelivery
+  + notify(sender: Colleague, event: str) → None
+      "taxi"            → _taxi.handle()
+      "master"          → _master.handle()
+      "flowers"         → _flowers.handle()
+      "taxi_done"       → _guest.receive("Taxi is on its way")
+      "master_done"     → _guest.receive("Master will arrive shortly")
+      "flowers_done"    → _guest.receive("Flowers are on their way")
+
+  COLLEAGUE
+  ─────────────────────────────────────────────────────────
+  Colleague  (ABC)
+  - _mediator : Mediator
+  + set_mediator(mediator: Mediator) → None
+
+  Guest(Colleague)
+  + request(service: str) → None   sends notify(self, service) to mediator
+  + receive(message: str) → None   called by mediator when service completes
+
+  TaxiService(Colleague)
+  + handle() → None   processes request, then notify(self, "taxi_done")
+
+  MasterService(Colleague)
+  + handle() → None   processes request, then notify(self, "master_done")
+
+  FlowerDelivery(Colleague)
+  + handle() → None   processes request, then notify(self, "flowers_done")
+
+  Call flow — guest requests a taxi:
+  ──────────────────────────────────────────────────────────
+  guest.request("taxi")
+    → mediator.notify(guest, "taxi")
+      → taxi.handle()
+        → mediator.notify(taxi, "taxi_done")
+          → guest.receive("Taxi is on its way")
+
+  Call flow — guest requests flower delivery:
+  ──────────────────────────────────────────────────────────
+  guest.request("flowers")
+    → mediator.notify(guest, "flowers")
+      → flowers.handle()
+        → mediator.notify(flowers, "flowers_done")
+          → guest.receive("Flowers are on their way")
+
+FILE STRUCTURE:
+  behavioral/mediator/
+  ├── __init__.py
+  ├── __main__.py                  ← demo: guest makes all three requests
+  ├── module_schema.txt
+  ├── mediator.py                  ← Mediator ABC
+  ├── colleague.py                 ← Colleague ABC
+  ├── concierge_mediator.py        ← ConciergeMediator (concrete mediator)
+  ├── guest.py                     ← Guest (colleague, initiates requests)
+  ├── services/
+  │   ├── __init__.py
+  │   ├── taxi_service.py          ← TaxiService
+  │   ├── master_service.py        ← MasterService
+  │   └── flower_delivery.py       ← FlowerDelivery
+  ├── uml/
+  │   └── mediator_general.puml    ← abstract pattern diagram
+  └── tests/
+      ├── __init__.py
+      └── test_mediator.py
