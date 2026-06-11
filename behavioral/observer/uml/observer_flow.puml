@@ -1,0 +1,78 @@
+@startuml observer_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam sequenceLifeLineBorderColor #888888
+
+participant "__main__"               as Main
+participant "service : StormService" as Service
+participant "school : School"        as School
+participant "airport : Airport"      as Airport
+participant "road : RoadService"     as Road
+
+== Setup ==
+
+Main    -> Service : <<create>> StormService()
+Main    -> Service : subscribe(school)
+Main    -> Service : subscribe(airport)
+Main    -> Service : subscribe(road)
+
+== LOW alert (only RoadService reacts) ==
+
+Main    -> Service : notify(StormAlertEvent(LOW, "Light storm."))
+activate Service
+  Service -> School  : update(alert)
+  activate School
+    School  --> Service : (ignored — below HIGH)
+  deactivate School
+  Service -> Airport : update(alert)
+  activate Airport
+    Airport --> Service : (ignored — below MODERATE)
+  deactivate Airport
+  Service -> Road    : update(alert)
+  activate Road
+    Road    --> Service : "[RoadService] Pre-treating roads"
+  deactivate Road
+deactivate Service
+
+== HIGH alert (all react) ==
+
+Main    -> Service : notify(StormAlertEvent(HIGH, "Severe storm."))
+activate Service
+  Service -> School  : update(alert)
+  activate School
+    School  --> Service : "[School] Cancelling classes"
+  deactivate School
+  Service -> Airport : update(alert)
+  activate Airport
+    Airport --> Service : "[Airport] Suspending all flights"
+  deactivate Airport
+  Service -> Road    : update(alert)
+  activate Road
+    Road    --> Service : "[RoadService] Closing highways"
+  deactivate Road
+deactivate Service
+
+== Unsubscribe school ==
+
+Main    -> Service : unsubscribe(school)
+activate Service
+  Service -> Service : _observers.remove(school)
+deactivate Service
+
+== EXTREME alert (school not notified) ==
+
+Main    -> Service : notify(StormAlertEvent(EXTREME, "Hurricane warning."))
+activate Service
+  Service -> Airport : update(alert)
+  activate Airport
+    Airport --> Service : "[Airport] Closing airport"
+  deactivate Airport
+  Service -> Road    : update(alert)
+  activate Road
+    Road    --> Service : "[RoadService] Full emergency response"
+  deactivate Road
+deactivate Service
+
+@enduml

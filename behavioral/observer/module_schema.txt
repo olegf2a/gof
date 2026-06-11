@@ -1,0 +1,140 @@
+OBSERVER PATTERN — Storm Warning Service
+══════════════════════════════════════════════════════════════
+
+  TASK: A storm warning service that publishes alerts at different
+        severity levels. Subscribers (schools, airports, road services)
+        react only to the levels that are relevant to them.
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  Observer         → Observer ABC      (defines update contract)
+  Observable       → Observable ABC    (defines subscribe / unsubscribe / notify)
+  Event            → StormAlertEvent   (warning level + message)
+  Level            → WarningLevel      (IntEnum: LOW, MODERATE, HIGH, EXTREME)
+  ConcreteSubject  → StormService      (manages subscribers, dispatches alerts)
+  ConcreteObserver → School            (reacts to HIGH, EXTREME)
+  ConcreteObserver → Airport           (reacts to MODERATE, HIGH, EXTREME)
+  ConcreteObserver → RoadService       (reacts to all levels)
+  Client           → __main__.py
+
+  WARNING LEVELS
+  ─────────────────────────────────────────────────────────
+  WarningLevel  (IntEnum)
+  LOW      = 1
+  MODERATE = 2
+  HIGH     = 3
+  EXTREME  = 4
+
+  EVENT
+  ─────────────────────────────────────────────────────────
+  StormAlertEvent  (frozen dataclass)
+  - message : str
+  - level   : WarningLevel
+
+  OBSERVER
+  ─────────────────────────────────────────────────────────
+  Observer  (ABC)
+  + update(alert: StormAlertEvent) → None  {abstract}
+
+  School(Observer)      reacts to: HIGH, EXTREME
+  Airport(Observer)     reacts to: MODERATE, HIGH, EXTREME
+  RoadService(Observer) reacts to: LOW, MODERATE, HIGH, EXTREME
+
+  Each subscriber ignores alerts below its threshold via match/case.
+
+  OBSERVABLE
+  ─────────────────────────────────────────────────────────
+  Observable  (ABC)
+  + subscribe(observer: Observer)          → None  {abstract}
+  + unsubscribe(observer: Observer)        → None  {abstract}
+  + notify(alert: StormAlertEvent)         → None  {abstract}
+
+  StormService(Observable)
+  - _observers : list[Observer]
+  + subscribe(observer: Observer)          → None  (_observers.append)
+  + unsubscribe(observer: Observer)        → None  (_observers.remove)
+  + notify(alert: StormAlertEvent)         → None  (calls update on each observer)
+
+  Note: StormAlertEvent is created by the client (__main__) and passed
+        directly to notify() — StormService has no issue_alert factory.
+
+  SUBSCRIBER REACTIONS
+  ─────────────────────────────────────────────────────────
+  RoadService  — LOW:      pre-treat roads
+               — MODERATE: deploy snow plows
+               — HIGH:     close highways
+               — EXTREME:  full emergency response
+
+  Airport      — MODERATE: restrict departures
+               — HIGH:     suspend all flights
+               — EXTREME:  close airport
+
+  School       — HIGH:     cancel classes
+               — EXTREME:  emergency closure
+
+  Call flow — issue alert:
+  ──────────────────────────────────────────────────────────
+  service = StormService()
+  service.subscribe(School())
+  service.subscribe(Airport())
+  service.subscribe(RoadService())
+
+  service.notify(StormAlertEvent(level=WarningLevel.HIGH, message="Severe storm."))
+    → school.update(alert)       → "[School] Cancelling classes"
+    → airport.update(alert)      → "[Airport] Suspending all flights"
+    → road_service.update(alert) → "[RoadService] Closing highways"
+
+  service.notify(StormAlertEvent(level=WarningLevel.LOW, message="Light storm."))
+    → school.update(alert)       → ignored (below HIGH)
+    → airport.update(alert)      → ignored (below MODERATE)
+    → road_service.update(alert) → "[RoadService] Pre-treating roads"
+
+  Call flow — unsubscribe:
+  ──────────────────────────────────────────────────────────
+  service.unsubscribe(school)
+  service.notify(StormAlertEvent(level=WarningLevel.EXTREME, message="Hurricane."))
+    → airport.update(alert)      → "[Airport] Closing airport"
+    → road_service.update(alert) → "[RoadService] Full emergency response"
+    (school no longer notified)
+
+FILE STRUCTURE:
+  behavioral/observer/
+  ├── __init__.py
+  ├── __main__.py                  ← demo: subscribe all → alerts at each level
+  ├── module_schema.txt
+  ├── observer.py                  ← Observer ABC
+  ├── observable.py                ← Observable ABC
+  ├── storm_alert_event.py         ← WarningLevel (IntEnum) + StormAlertEvent (dataclass)
+  ├── storm_service.py             ← StormService (concrete subject)
+  ├── subscribers/
+  │   ├── __init__.py
+  │   ├── school.py                ← School       (reacts to HIGH, EXTREME)
+  │   ├── airport.py               ← Airport      (reacts to MODERATE+)
+  │   └── road_service.py          ← RoadService  (reacts to all levels)
+  ├── uml/
+  │   ├── observer_general.puml    ← abstract pattern diagram
+  │   ├── observer_schema.puml     ← structural class diagram
+  │   └── observer_flow.puml       ← sequence diagram
+  └── tests/
+      ├── __init__.py
+      └── test_observer.py
+
+DIFFERENCE FROM RELATED PATTERNS
+══════════════════════════════════════════════════════════════
+
+  ┌──────────────┬─────────────────────────────────────────────────────────────┐
+  │ Pattern      │ Intent                                                      │
+  ├──────────────┼─────────────────────────────────────────────────────────────┤
+  │ Observer     │ One subject, many subscribers. Subject pushes events to     │
+  │              │ all subscribers automatically. Subscribers filter what      │
+  │              │ they care about inside update().                            │
+  ├──────────────┼─────────────────────────────────────────────────────────────┤
+  │ Mediator     │ Many-to-many. Components talk through a central mediator    │
+  │              │ instead of directly. Mediator decides who gets what.        │
+  ├──────────────┼─────────────────────────────────────────────────────────────┤
+  │ Command      │ Encapsulates a request as an object. No subscription model; │
+  │              │ the invoker explicitly runs each command.                   │
+  ├──────────────┼─────────────────────────────────────────────────────────────┤
+  │ Key          │ Observer: subject broadcasts, subscribers self-select.      │
+  │ distinction  │ Mediator: mediator routes, components stay decoupled.       │
+  └──────────────┴─────────────────────────────────────────────────────────────┘
