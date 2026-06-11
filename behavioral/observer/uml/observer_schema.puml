@@ -1,0 +1,105 @@
+@startuml observer_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client" {
+  class "__main__" as Main {
+    + demo() : None
+  }
+}
+
+package "Event" {
+  class WarningLevel {
+    LOW      = 1
+    MODERATE = 2
+    HIGH     = 3
+    EXTREME  = 4
+  }
+
+  class StormAlertEvent {
+    - message : str
+    - level   : WarningLevel
+  }
+
+  StormAlertEvent --> WarningLevel : uses
+}
+
+package "Observer" {
+  abstract class Observer {
+    + update(alert: StormAlertEvent) : None  {abstract}
+  }
+
+  class School {
+    + update(alert: StormAlertEvent) : None
+  }
+
+  class Airport {
+    + update(alert: StormAlertEvent) : None
+  }
+
+  class RoadService {
+    + update(alert: StormAlertEvent) : None
+  }
+
+  Observer <|-- School
+  Observer <|-- Airport
+  Observer <|-- RoadService
+}
+
+package "Observable" {
+  abstract class Observable {
+    + subscribe(o: Observer)         : None  {abstract}
+    + unsubscribe(o: Observer)       : None  {abstract}
+    + notify(alert: StormAlertEvent) : None  {abstract}
+  }
+
+  class StormService {
+    - _observers : list[Observer]
+    + subscribe(o: Observer)         : None
+    + unsubscribe(o: Observer)       : None
+    + notify(alert: StormAlertEvent) : None
+  }
+
+  Observable <|-- StormService
+}
+
+Main          ..>  StormAlertEvent : <<creates>>
+Main          -->  StormService    : drives
+StormService  o--> Observer        : stores subscribers
+StormService  -->  Observer        : calls update()
+School        ..>  StormAlertEvent : reads level
+Airport       ..>  StormAlertEvent : reads level
+RoadService   ..>  StormAlertEvent : reads level
+
+note right of StormService
+  notify() dispatches alert
+  to every subscribed observer.
+  Observers self-filter by level.
+end note
+
+note right of School
+  Reacts to HIGH, EXTREME.
+  Ignores LOW, MODERATE.
+end note
+
+note right of Airport
+  Reacts to MODERATE, HIGH, EXTREME.
+  Ignores LOW.
+end note
+
+note right of RoadService
+  Reacts to all levels.
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (stores)
+  ..>   dependency (creates / reads)
+  -->   association
+end legend
+
+@enduml

@@ -1,0 +1,85 @@
+@startuml observer_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+}
+
+package "Observer" {
+  abstract class Observer {
+    + update(event: Event) : None  {abstract}
+  }
+
+  class ConcreteObserverA {
+    + update(event: Event) : None
+  }
+
+  class ConcreteObserverB {
+    + update(event: Event) : None
+  }
+
+  Observer <|-- ConcreteObserverA
+  Observer <|-- ConcreteObserverB
+}
+
+package "Observable" {
+  abstract class Observable {
+    + subscribe(o: Observer)   : None  {abstract}
+    + unsubscribe(o: Observer) : None  {abstract}
+    + notify(event: Event)     : None  {abstract}
+  }
+
+  class ConcreteSubject {
+    - _observers : list[Observer]
+    + subscribe(o: Observer)   : None
+    + unsubscribe(o: Observer) : None
+    + notify(event: Event)     : None
+  }
+
+  Observable <|-- ConcreteSubject
+}
+
+package "Event" {
+  class Event {
+    - data : Any
+  }
+}
+
+Client          --> ConcreteSubject  : creates & notifies
+Client          ..> Event            : <<creates>>
+ConcreteSubject o--> Observer        : stores subscribers
+ConcreteSubject --> Observer         : calls update()
+ConcreteObserverA ..> Event          : reads
+ConcreteObserverB ..> Event          : reads
+
+note right of ConcreteSubject
+  notify() iterates all
+  subscribers and calls
+  update(event) on each.
+end note
+
+note right of Observer
+  Each subscriber decides
+  internally whether to
+  react to the event.
+end note
+
+note right of Client
+  Client creates the event
+  and passes it to notify() —
+  subject has no factory logic.
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (stores)
+  ..>   dependency (creates / reads)
+  -->   association
+end legend
+
+@enduml
