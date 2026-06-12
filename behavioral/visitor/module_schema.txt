@@ -1,0 +1,145 @@
+VISITOR PATTERN — Custom Pizza Recipe
+══════════════════════════════════════════════════════════════
+
+  TASK: Build a pizza from a custom recipe of ingredients (Cheese,
+        Bacon, Pineapple, Mushroom, Seafood). Apply different visitors
+        to the pizza without modifying the ingredient classes — one
+        visitor cooks, another calculates total price.
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  Element          → Ingredient ABC     (name, price, accept(visitor))
+  ConcreteElement  → Cheese             (name="Cheese",    price=1.50)
+  ConcreteElement  → Bacon              (name="Bacon",     price=2.00)
+  ConcreteElement  → Pineapple          (name="Pineapple", price=0.80)
+  ConcreteElement  → Mushroom           (name="Mushroom",  price=1.20)
+  ConcreteElement  → Seafood            (name="Seafood",   price=3.50)
+  Visitor          → Visitor ABC        (declares visit_* per element type)
+  ConcreteVisitor  → CookVisitor        (prints cooking instruction per ingredient)
+  ConcreteVisitor  → PriceVisitor       (accumulates total via ingredient.price)
+  ObjectStructure  → Pizza              (holds ingredients, accepts a visitor)
+  Client           → __main__.py
+
+  ELEMENT ABC
+  ─────────────────────────────────────────────────────────
+  Ingredient  (ABC)
+  + name                             → str    {abstract property}
+  + price                            → float  {abstract property}
+  + accept(visitor: Visitor)         → None   {abstract}
+
+  Cheese(Ingredient)    name="Cheese"    price=1.50  accept → visitor.visit_cheese(self)
+  Bacon(Ingredient)     name="Bacon"     price=2.00  accept → visitor.visit_bacon(self)
+  Pineapple(Ingredient) name="Pineapple" price=0.80  accept → visitor.visit_pineapple(self)
+  Mushroom(Ingredient)  name="Mushroom"  price=1.20  accept → visitor.visit_mushroom(self)
+  Seafood(Ingredient)   name="Seafood"   price=3.50  accept → visitor.visit_seafood(self)
+
+  VISITOR ABC
+  ─────────────────────────────────────────────────────────
+  Visitor  (ABC)
+  + visit_cheese(ingredient: Cheese)       → None  {abstract}
+  + visit_bacon(ingredient: Bacon)         → None  {abstract}
+  + visit_pineapple(ingredient: Pineapple) → None  {abstract}
+  + visit_mushroom(ingredient: Mushroom)   → None  {abstract}
+  + visit_seafood(ingredient: Seafood)     → None  {abstract}
+
+  CONCRETE VISITORS
+  ─────────────────────────────────────────────────────────
+  CookVisitor(Visitor)
+  + visit_cheese(...)    → print(f"[Cook] {ingredient.name}: melting on the base.")
+  + visit_bacon(...)     → print(f"[Cook] {ingredient.name}: frying until crispy.")
+  + visit_pineapple(...) → print(f"[Cook] {ingredient.name}: adding fresh chunks.")
+  + visit_mushroom(...)  → print(f"[Cook] {ingredient.name}: sautéing.")
+  + visit_seafood(...)   → print(f"[Cook] {ingredient.name}: grilling.")
+
+  PriceVisitor(Visitor)
+  - _total : float = 0.0
+  + total                → float  (property)
+  + visit_*(ingredient)  → _total += ingredient.price  (same for all five)
+
+  OBJECT STRUCTURE
+  ─────────────────────────────────────────────────────────
+  Pizza
+  - _ingredients : list[Ingredient]
+  + add(ingredient: Ingredient) → None
+  + accept(visitor: Visitor)    → None
+      for ingredient in _ingredients:
+          ingredient.accept(visitor)
+
+  DOUBLE DISPATCH
+  ─────────────────────────────────────────────────────────
+  pizza.accept(visitor)
+    → ingredient.accept(visitor)      ← 1st dispatch (type of ingredient)
+      → visitor.visit_cheese(self)    ← 2nd dispatch (type of visitor)
+
+  Resolves the correct visit_* for any ingredient × visitor combination
+  without conditionals in either class.
+
+  Call flow — cook visitor:
+  ──────────────────────────────────────────────────────────
+  pizza = Pizza()
+  pizza.add(Cheese()); pizza.add(Bacon()); pizza.add(Pineapple())
+
+  pizza.accept(CookVisitor())
+    → Cheese.accept(cook)     → cook.visit_cheese(cheese)
+        → "[Cook] Cheese: melting on the base."
+    → Bacon.accept(cook)      → cook.visit_bacon(bacon)
+        → "[Cook] Bacon: frying until crispy."
+    → Pineapple.accept(cook)  → cook.visit_pineapple(pineapple)
+        → "[Cook] Pineapple: adding fresh chunks."
+
+  Call flow — price visitor:
+  ──────────────────────────────────────────────────────────
+  price = PriceVisitor()
+  pizza.accept(price)
+    → Cheese.accept(price)    → price.visit_cheese(cheese)    → _total += 1.50
+    → Bacon.accept(price)     → price.visit_bacon(bacon)      → _total += 2.00
+    → Pineapple.accept(price) → price.visit_pineapple(...)    → _total += 0.80
+
+  price.total  →  4.30
+
+FILE STRUCTURE:
+  behavioral/visitor/
+  ├── __init__.py
+  ├── __main__.py                  ← demo: build pizza → price → cook
+  ├── module_schema.txt
+  ├── ingredient.py                ← Ingredient ABC (name, price, accept)
+  ├── visitor.py                   ← Visitor ABC
+  ├── pizza.py                     ← Pizza (object structure)
+  ├── ingredients/
+  │   ├── __init__.py
+  │   ├── cheese.py                ← Cheese    ($1.50)
+  │   ├── bacon.py                 ← Bacon     ($2.00)
+  │   ├── pineapple.py             ← Pineapple ($0.80)
+  │   ├── mushroom.py              ← Mushroom  ($1.20)
+  │   └── seafood.py               ← Seafood   ($3.50)
+  ├── visitors/
+  │   ├── __init__.py
+  │   ├── cook_visitor.py          ← CookVisitor  (uses ingredient.name)
+  │   └── price_visitor.py         ← PriceVisitor (uses ingredient.price)
+  ├── uml/
+  │   ├── visitor_general.puml     ← abstract pattern diagram
+  │   ├── visitor_schema.puml      ← structural class diagram
+  │   └── visitor_flow.puml        ← sequence diagram
+  └── tests/
+      ├── __init__.py
+      └── test_visitor.py
+
+DIFFERENCE FROM RELATED PATTERNS
+══════════════════════════════════════════════════════════════
+
+  ┌─────────────┬──────────────────────────────────────────────────────────────┐
+  │ Pattern     │ Intent                                                       │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Visitor     │ Add new operations to a stable object structure without      │
+  │             │ modifying the elements. Double dispatch routes each call     │
+  │             │ to the correct visitor method per element type.              │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Strategy    │ Swap one algorithm at runtime. Single object, single         │
+  │             │ operation — no object structure traversal.                   │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Iterator    │ Traverses a collection. Does not add operations — only       │
+  │             │ controls how elements are visited, not what happens to them. │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Key         │ Visitor: new operations = easy (add a visitor class).        │
+  │ trade-off   │ New element types = expensive (all visitors must be updated).│
+  └─────────────┴──────────────────────────────────────────────────────────────┘

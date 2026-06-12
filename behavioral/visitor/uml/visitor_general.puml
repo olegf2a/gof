@@ -1,0 +1,88 @@
+@startuml visitor_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+}
+
+package "ObjectStructure" {
+  class ObjectStructure {
+    - _elements : list[Element]
+    + add(e: Element)         : None
+    + accept(v: Visitor)      : None
+  }
+}
+
+package "Element" {
+  abstract class Element {
+    + name  : str    {abstract}
+    + price : float  {abstract}
+    + accept(v: Visitor) : None  {abstract}
+  }
+
+  class ConcreteElementA {
+    + accept(v: Visitor) : None
+  }
+
+  class ConcreteElementB {
+    + accept(v: Visitor) : None
+  }
+
+  Element <|-- ConcreteElementA
+  Element <|-- ConcreteElementB
+}
+
+package "Visitor" {
+  abstract class Visitor {
+    + visit_a(e: ConcreteElementA) : None  {abstract}
+    + visit_b(e: ConcreteElementB) : None  {abstract}
+  }
+
+  class ConcreteVisitor1 {
+    + visit_a(e: ConcreteElementA) : None
+    + visit_b(e: ConcreteElementB) : None
+  }
+
+  class ConcreteVisitor2 {
+    + visit_a(e: ConcreteElementA) : None
+    + visit_b(e: ConcreteElementB) : None
+  }
+
+  Visitor <|-- ConcreteVisitor1
+  Visitor <|-- ConcreteVisitor2
+}
+
+Client          -->  ObjectStructure  : calls accept(visitor)
+Client          ..>  ConcreteVisitor1 : <<creates>>
+Client          ..>  ConcreteVisitor2 : <<creates>>
+ObjectStructure o--> Element          : holds
+ObjectStructure -->  Visitor          : passes to element.accept()
+ConcreteElementA --> Visitor          : calls visit_a(self)
+ConcreteElementB --> Visitor          : calls visit_b(self)
+
+note right of Element
+  accept() = first dispatch.
+  Calls visitor.visit_*(self)
+  = second dispatch.
+  Together: double dispatch.
+end note
+
+note right of Visitor
+  New operations = new
+  visitor class. Elements
+  are never modified.
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (holds)
+  ..>   dependency (creates)
+  -->   association / call
+end legend
+
+@enduml

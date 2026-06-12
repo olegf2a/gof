@@ -1,0 +1,71 @@
+@startuml visitor_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam sequenceLifeLineBorderColor #888888
+
+participant "__main__"          as Main
+participant "pizza : Pizza"     as Pizza
+participant "cheese : Cheese"   as Cheese
+participant "bacon : Bacon"     as Bacon
+participant "cook : CookVisitor" as Cook
+participant "price : PriceVisitor" as Price
+
+== Setup ==
+
+Main  -> Pizza  : <<create>> Pizza()
+Main  -> Pizza  : add(Cheese())
+Main  -> Pizza  : add(Bacon())
+note right of Pizza : _ingredients = [Cheese, Bacon, ...]
+
+== Cook visitor (double dispatch) ==
+
+Main  -> Cook   : <<create>> CookVisitor()
+Main  -> Pizza  : accept(cook)
+activate Pizza
+  Pizza -> Cheese : accept(cook)
+  activate Cheese
+    Cheese -> Cook  : visit_cheese(self)
+    activate Cook
+      Cook --> Cheese : "[Cook] Cheese: melting on the base."
+    deactivate Cook
+  deactivate Cheese
+  Pizza -> Bacon  : accept(cook)
+  activate Bacon
+    Bacon -> Cook   : visit_bacon(self)
+    activate Cook
+      Cook --> Bacon : "[Cook] Bacon: frying until crispy."
+    deactivate Cook
+  deactivate Bacon
+deactivate Pizza
+
+== Price visitor (double dispatch) ==
+
+Main  -> Price  : <<create>> PriceVisitor()
+Main  -> Pizza  : accept(price)
+activate Pizza
+  Pizza -> Cheese : accept(price)
+  activate Cheese
+    Cheese -> Price : visit_cheese(self)
+    activate Price
+      Price -> Cheese : ingredient.price
+      Cheese --> Price : 1.50
+      Price -> Price  : _total += 1.50
+    deactivate Price
+  deactivate Cheese
+  Pizza -> Bacon  : accept(price)
+  activate Bacon
+    Bacon -> Price  : visit_bacon(self)
+    activate Price
+      Price -> Bacon  : ingredient.price
+      Bacon --> Price : 2.00
+      Price -> Price  : _total += 2.00
+    deactivate Price
+  deactivate Bacon
+deactivate Pizza
+
+Main  -> Price  : total
+Price --> Main  : 3.50  (cheese + bacon)
+
+@enduml
