@@ -1,0 +1,85 @@
+@startuml state_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client" {
+  class "__main__" as Main {
+    + demo() : None
+  }
+}
+
+package "Context" {
+  class PizzaOven {
+    - _state : OvenState
+    + change_state(s: OvenState) : None
+    + state_name                 : str
+    + heat_up()                  : None
+    + cool_down()                : None
+    + bake(pizza: str)           : None
+  }
+}
+
+package "State" {
+  abstract class OvenState {
+    + heat_up(context: PizzaOven)          : None  {abstract}
+    + cool_down(context: PizzaOven)        : None  {abstract}
+    + bake(context: PizzaOven, pizza: str) : None  {abstract}
+    + name()                               : str   {abstract}
+  }
+
+  class ColdState {
+    + heat_up()   : → ReadyState
+    + cool_down() : RuntimeError
+    + bake()      : RuntimeError
+    + name()      : "Cold"
+  }
+
+  class ReadyState {
+    + heat_up()   : → OverheatedState
+    + cool_down() : → ColdState
+    + bake()      : bakes pizza ✓
+    + name()      : "Ready"
+  }
+
+  class OverheatedState {
+    + heat_up()   : RuntimeError
+    + cool_down() : → ReadyState
+    + bake()      : RuntimeError
+    + name()      : "Overheated"
+  }
+
+  OvenState  <|-- ColdState
+  OvenState  <|-- ReadyState
+  OvenState  <|-- OverheatedState
+}
+
+Main          -->  PizzaOven      : creates & drives
+PizzaOven     o--> OvenState      : holds current state
+ColdState     ..>  ReadyState     : <<heat_up>>
+ReadyState    ..>  OverheatedState: <<heat_up>>
+ReadyState    ..>  ColdState      : <<cool_down>>
+OverheatedState..> ReadyState     : <<cool_down>>
+
+note right of PizzaOven
+  Starts in ColdState.
+  All public methods delegate
+  to the current state.
+end note
+
+note right of ReadyState
+  Only state where
+  bake() succeeds.
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (holds)
+  ..>   dependency / transition
+  -->   association
+end legend
+
+@enduml
