@@ -11,35 +11,38 @@ def demo() -> None:
     print("--- Writing and saving versions ---")
     editor.write("First draft: introduction only.")
     history.save(editor)
-    print(f"  v1 saved: {editor.content!r}")
+    print(f"  saved: {editor.content!r}")
 
     editor.write("Second draft: added body paragraphs.")
     history.save(editor)
-    print(f"  v2 saved: {editor.content!r}")
+    print(f"  saved: {editor.content!r}")
 
     editor.write("Third draft: conclusion added, ready for review.")
     history.save(editor)
-    print(f"  v3 saved: {editor.content!r}")
+    print(f"  saved: {editor.content!r}")
 
-    print(f"\n--- Saved history ({len(history.history())} versions) ---")
-    for i, snap in enumerate(history.history()):
-        print(f"  [{i}] {snap.get_content()!r}")
+    snapshots = history.history()
+    print(f"\n--- Saved history ({len(snapshots)} versions) ---")
+    for snap in snapshots:
+        print(f"  [{snap.get_version()}]  {snap.get_state()!r}")
 
-    print("\n--- Restore to version 0 ---")
-    history.restore(editor, 0)
+    v1, v2, v3 = (snap.get_version() for snap in snapshots)
+
+    print(f"\n--- Restore to v1 ---")
+    history.restore(editor, v1)
     print(f"  current: {editor.content!r}")
 
-    print("\n--- Restore to version 1 ---")
-    history.restore(editor, 1)
+    print(f"\n--- Restore to v2 ---")
+    history.restore(editor, v2)
     print(f"  current: {editor.content!r}")
 
-    print("\n--- Restore to last version (-1) ---")
-    history.restore(editor, -1)
+    print(f"\n--- Restore to v3 ---")
+    history.restore(editor, v3)
     print(f"  current: {editor.content!r}")
 
-    print("\n--- Restore to invalid version ---")
+    print("\n--- Restore to unknown version ---")
     try:
-        history.restore(editor, 99)
+        history.restore(editor, "2000-01-01 00:00:00.000000")
     except RuntimeError as e:
         print(f"  RuntimeError: {e}")
 

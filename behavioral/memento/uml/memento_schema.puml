@@ -14,12 +14,15 @@ package "Client" {
 
 package "Memento" {
   abstract class Memento {
-    + get_content() : str  {abstract}
+    - _version : str
+    + get_state()   : str  {abstract}
+    + get_version() : str
   }
 
   class TextSnapshot {
-    - _content : str
-    + get_content() : str
+    - _state : str
+    + get_state()   : str
+    + get_version() : str
   }
 
   Memento <|-- TextSnapshot
@@ -27,16 +30,16 @@ package "Memento" {
 
 package "Originator" {
   abstract class Originator {
-    + save()                    : Memento  {abstract}
-    + restore(m: Memento)       : None     {abstract}
+    + save()                  : Memento  {abstract}
+    + restore(m: Memento)     : None     {abstract}
   }
 
   class TextEditor {
     - _content : str
-    + content                   : str
-    + write(text: str)          : None
-    + save()                    : TextSnapshot
-    + restore(m: TextSnapshot)  : None
+    + content                 : str
+    + write(text: str)        : None
+    + save()                  : TextSnapshot
+    + restore(m: Memento)     : None
   }
 
   Originator <|-- TextEditor
@@ -44,34 +47,34 @@ package "Originator" {
 
 package "Caretaker" {
   class VersionHistory {
-    - _history : list[Memento]
-    + save(editor: Originator)             : None
-    + restore(editor: Originator, v: int)  : None
-    + history()                            : list[Memento]
+    - _history : dict[str, Memento]
+    + save(editor: Originator)                  : None
+    + restore(editor: Originator, v: str)       : None
+    + history()                                 : list[Memento]
   }
 }
 
 Main               -->  TextEditor      : creates & writes
 Main               -->  VersionHistory  : drives save / restore
-VersionHistory     o--> Memento         : stores snapshots
+VersionHistory     o--> Memento         : stores by version key
 TextEditor         ..>  TextSnapshot    : <<creates>>
-TextEditor         ..>  TextSnapshot    : <<reads on restore>>
+TextEditor         ..>  Memento         : <<reads on restore>>
 
 note right of TextSnapshot
-  Concrete memento.
-  Content is set once
-  in __init__ — never mutated.
+  Version key is a microsecond-
+  precision timestamp set in
+  Memento.__init__().
 end note
 
 note right of VersionHistory
-  Never reads snapshot content.
-  Only passes snapshots back
-  to the originator on restore.
+  dict keyed by version string.
+  Never reads snapshot content —
+  only passes it back to originator.
 end note
 
 note right of TextEditor
   save()    → wraps _content in TextSnapshot.
-  restore() → reads content via get_content().
+  restore() → reads state via get_state().
 end note
 
 legend right

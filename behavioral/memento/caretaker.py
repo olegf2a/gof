@@ -4,16 +4,17 @@ from .originator import Originator
 
 class VersionHistory:
     def __init__(self) -> None:
-        self._history: list[Memento] = []
+        self._history: dict[str, Memento] = {}
 
     def save(self, editor: Originator) -> None:
-        self._history.append(editor.save())
+        memento: Memento = editor.save()
+        self._history[memento.get_version()] = memento
 
-    def restore(self, editor: Originator, version: int) -> None:
+    def restore(self, editor: Originator, version: str) -> None:
         try:
             editor.restore(self._history[version])
-        except IndexError:
+        except KeyError:
             raise RuntimeError(f"Version {version} does not exist")
 
     def history(self) -> list[Memento]:
-        return list(self._history)
+        return list(self._history.values())

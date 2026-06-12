@@ -5,87 +5,70 @@ skinparam sequenceParticipantBackgroundColor #f9f9f9
 skinparam sequenceParticipantBorderColor #444444
 skinparam sequenceLifeLineBorderColor #888888
 
-participant "__main__"              as Main
-participant "history : VersionHistory" as History
-participant "editor : TextEditor"   as Editor
-participant "snap : TextSnapshot"   as Snap
+participant "__main__"                  as Main
+participant "history : VersionHistory"  as History
+participant "editor : TextEditor"       as Editor
+participant "snap : TextSnapshot"       as Snap
 
 == Setup ==
 
-Main   -> Editor  : <<create>> TextEditor()
-Main   -> History : <<create>> VersionHistory()
+Main    -> Editor   : <<create>> TextEditor()
+Main    -> History  : <<create>> VersionHistory()
 
 == Save version 1 ==
 
-Main   -> Editor  : write("First draft.")
-Main   -> History : save(editor)
+Main    -> Editor   : write("First draft.")
+Main    -> History  : save(editor)
 activate History
-  History -> Editor : save()
+  History -> Editor  : save()
   activate Editor
-    Editor -> Snap  : <<create>> TextSnapshot("First draft.")
+    Editor  -> Snap  : <<create>> TextSnapshot("First draft.")
+    note right of Snap : _version = "2026-06-12 10:00:00.000001"
     Editor --> History : snap
   deactivate Editor
-  History -> History : _history.append(snap)
+  History -> History : _history[snap.get_version()] = snap
 deactivate History
 
 == Save version 2 ==
 
-Main   -> Editor  : write("Second draft.")
-Main   -> History : save(editor)
+Main    -> Editor   : write("Second draft.")
+Main    -> History  : save(editor)
 activate History
-  History -> Editor : save()
+  History -> Editor  : save()
   activate Editor
-    Editor -> Snap  : <<create>> TextSnapshot("Second draft.")
+    Editor  -> Snap  : <<create>> TextSnapshot("Second draft.")
+    note right of Snap : _version = "2026-06-12 10:00:00.000042"
     Editor --> History : snap
   deactivate Editor
-  History -> History : _history.append(snap)
+  History -> History : _history[snap.get_version()] = snap
 deactivate History
 
-== Save version 3 ==
+== List history, extract keys ==
 
-Main   -> Editor  : write("Third draft.")
-Main   -> History : save(editor)
+Main    -> History  : history()
+History --> Main    : [snap1, snap2]
+Main    -> Main     : v1 = snap1.get_version()
+Main    -> Main     : v2 = snap2.get_version()
+
+== Restore version 1 by key ==
+
+Main    -> History  : restore(editor, v1)
 activate History
-  History -> Editor : save()
-  activate Editor
-    Editor -> Snap  : <<create>> TextSnapshot("Third draft.")
-    Editor --> History : snap
-  deactivate Editor
-  History -> History : _history.append(snap)
-deactivate History
-
-== Restore version 0 ==
-
-Main   -> History : restore(editor, 0)
-activate History
-  History -> History : snap = _history[0]
+  History -> History : snap = _history[v1]
   History -> Editor  : restore(snap)
   activate Editor
-    Editor -> Snap  : get_content()
+    Editor  -> Snap  : get_state()
     Snap   --> Editor : "First draft."
     Editor -> Editor : _content = "First draft."
   deactivate Editor
 deactivate History
 
-== Restore version 1 ==
-
-Main   -> History : restore(editor, 1)
-activate History
-  History -> History : snap = _history[1]
-  History -> Editor  : restore(snap)
-  activate Editor
-    Editor -> Snap  : get_content()
-    Snap   --> Editor : "Second draft."
-    Editor -> Editor : _content = "Second draft."
-  deactivate Editor
-deactivate History
-
 == Invalid version ==
 
-Main   -> History : restore(editor, 99)
+Main    -> History  : restore(editor, "2000-01-01 00:00:00.000000")
 activate History
-  History -> History : _history[99]  raises IndexError
-  History --> Main   : raises RuntimeError("Version 99 does not exist")
+  History -> History : _history["2000-01-01 ..."]  raises KeyError
+  History --> Main   : raises RuntimeError("Version ... does not exist")
 deactivate History
 
 @enduml

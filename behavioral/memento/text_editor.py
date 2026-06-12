@@ -18,4 +18,6 @@ class TextEditor(Originator):
         return TextSnapshot(self._content)
 
     def restore(self, memento: Memento) -> None:
-        self._content = memento.get_content()
+        if not isinstance(memento, TextSnapshot):
+            raise TypeError("Memento must be of type TextSnapshot")
+        self._content = memento.get_state()

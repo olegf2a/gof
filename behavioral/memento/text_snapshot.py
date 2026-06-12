@@ -3,7 +3,8 @@ from .memento import Memento
 
 class TextSnapshot(Memento):
     def __init__(self, content: str) -> None:
-        self._content = content
+        self._state = content
+        super().__init__()
 
-    def get_content(self) -> str:
-        return self._content
+    def get_state(self) -> str:
+        return self._state

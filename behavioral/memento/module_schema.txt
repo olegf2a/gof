@@ -1,27 +1,30 @@
 MEMENTO PATTERN — Text Editor Versions
 ══════════════════════════════════════════════════════════════
 
-  TASK: A text editor that saves snapshots of its content and can
-        restore any saved version by index — without exposing the
-        editor's internal state to the caretaker.
+  TASK: A text editor that saves timestamped snapshots of its content
+        and can restore any saved version by its version key — without
+        exposing the editor's internal state to the caretaker.
 
   ROLES
   ─────────────────────────────────────────────────────────
-  Memento            → Memento ABC       (defines get_content contract)
-  ConcreteMemento    → TextSnapshot      (stores immutable content string)
+  Memento            → Memento ABC       (defines get_state / get_version contract)
+  ConcreteMemento    → TextSnapshot      (stores content + auto-generated version key)
   Originator         → Originator ABC    (defines save / restore contract)
   ConcreteOriginator → TextEditor        (writes text, creates / consumes snapshots)
-  Caretaker          → VersionHistory    (stores snapshots, restores by version index)
+  Caretaker          → VersionHistory    (dict-based store: version key → snapshot)
   Client             → __main__.py
 
   MEMENTO
   ─────────────────────────────────────────────────────────
   Memento  (ABC)
-  + get_content() → str  {abstract}
+  - _version : str   ← set in __init__ via datetime.now() with microsecond precision
+  + get_state()   → str  {abstract}
+  + get_version() → str  (format: "YYYY-MM-DD HH:MM:SS.ffffff")
 
   TextSnapshot(Memento)
-  - _content : str
-  + get_content() → str
+  - _state : str
+  + __init__(content: str) → calls super().__init__() to stamp version
+  + get_state()   → str
 
   ORIGINATOR
   ─────────────────────────────────────────────────────────
@@ -31,19 +34,22 @@ MEMENTO PATTERN — Text Editor Versions
 
   TextEditor(Originator)
   - _content : str
-  + write(text: str)            → None     (_content = text)
+  + content                     → str   (property, read-only)
+  + write(text: str)            → None  (_content = text)
   + save()                      → TextSnapshot(content=_content)
-  + restore(memento: TextSnapshot) → None  (_content = memento.get_content())
+  + restore(memento: Memento)   → None  (_content = memento.get_state())
 
   CARETAKER
   ─────────────────────────────────────────────────────────
   VersionHistory
-  - _history : list[Memento]
-  + save(editor: Originator)             → None               (calls editor.save(), appends snapshot)
-  + restore(editor: Originator, v: int)  → None               (calls editor.restore(_history[v]))
-  + history()                            → list[Memento]      (returns copy)
+  - _history : dict[str, Memento]   ← keyed by snapshot version string
+  + save(editor: Originator)                    → None
+      calls editor.save(), stores as _history[memento.get_version()] = memento
+  + restore(editor: Originator, version: str)   → None
+      calls editor.restore(_history[version])
+  + history()                                   → list[Memento]  (returns copy of values)
 
-  restore() wraps IndexError as RuntimeError("Version {v} does not exist")
+  restore() wraps KeyError as RuntimeError("Version {version} does not exist")
 
   Call flow — save versions:
   ──────────────────────────────────────────────────────────
@@ -51,34 +57,37 @@ MEMENTO PATTERN — Text Editor Versions
   history = VersionHistory()
 
   editor.write("First draft.")
-  history.save(editor)                → _history[0] = TextSnapshot("First draft.")
+  history.save(editor)
+    → snap = TextSnapshot("First draft.")   ← version = "2026-06-12 10:00:00.000001"
+    → _history["2026-06-12 10:00:00.000001"] = snap
 
-  editor.write("Second draft with edits.")
-  history.save(editor)                → _history[1] = TextSnapshot("Second draft with edits.")
+  editor.write("Second draft.")
+  history.save(editor)
+    → snap = TextSnapshot("Second draft.")  ← version = "2026-06-12 10:00:00.000042"
+    → _history["2026-06-12 10:00:00.000042"] = snap
 
-  editor.write("Final version.")
-  history.save(editor)                → _history[2] = TextSnapshot("Final version.")
-
-  Call flow — restore by version:
+  Call flow — restore by version key:
   ──────────────────────────────────────────────────────────
-  history.restore(editor, 0)
-    → editor.restore(_history[0])     → editor._content = "First draft."
+  snapshots = history.history()
+  v1 = snapshots[0].get_version()   → "2026-06-12 10:00:00.000001"
+  v2 = snapshots[1].get_version()   → "2026-06-12 10:00:00.000042"
 
-  history.restore(editor, 1)
-    → editor.restore(_history[1])     → editor._content = "Second draft with edits."
+  history.restore(editor, v1)
+    → editor.restore(_history[v1])  → editor._content = "First draft."
 
-  history.restore(editor, 99)         → raises RuntimeError("Version 99 does not exist")
+  history.restore(editor, "2000-01-01 00:00:00.000000")
+    → raises RuntimeError("Version 2000-01-01 00:00:00.000000 does not exist")
 
 FILE STRUCTURE:
   behavioral/memento/
   ├── __init__.py
-  ├── __main__.py              ← demo: write → save × 3 → restore by version
+  ├── __main__.py              ← demo: write → save × 3 → restore by version key
   ├── module_schema.txt
-  ├── memento.py               ← Memento ABC
+  ├── memento.py               ← Memento ABC (get_state + get_version)
   ├── text_snapshot.py         ← TextSnapshot (concrete memento)
   ├── originator.py            ← Originator ABC
   ├── text_editor.py           ← TextEditor (concrete originator)
-  ├── caretaker.py             ← VersionHistory (caretaker)
+  ├── caretaker.py             ← VersionHistory (dict-based caretaker)
   ├── uml/
   │   ├── memento_general.puml ← abstract pattern diagram
   │   ├── memento_schema.puml  ← structural class diagram
@@ -105,15 +114,10 @@ DIFFERENCE FROM RELATED PATTERNS
   │ distinction │ Command saves INTENT (what was done and how to undo it).     │
   ├─────────────┼──────────────────────────────────────────────────────────────┤
   │ When to use │ Memento: when reversing the operation is impractical or      │
-  │ Memento     │ impossible (e.g. complex transformations, external state).   │
-  │             │ Restore any arbitrary version directly by index.             │
+  │ Memento     │ impossible. Restore any arbitrary version directly by key.   │
   ├─────────────┼──────────────────────────────────────────────────────────────┤
   │ When to use │ Command: when operations are well-defined and invertible.    │
   │ Command     │ Undo walks history step-by-step; no full copies needed.      │
-  ├─────────────┼──────────────────────────────────────────────────────────────┤
-  │ Combined    │ Command history + Memento snapshot: use Command for step     │
-  │             │ undo/redo, Memento for "save point" restore across many      │
-  │             │ operations at once.                                          │
   └─────────────┴──────────────────────────────────────────────────────────────┘
 
   ENCAPSULATION contrast:
