@@ -1,0 +1,42 @@
+@startuml template_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam sequenceLifeLineBorderColor #888888
+
+participant "__main__"                  as Main
+participant "writer : DateFileWriter"   as Date
+participant "FileWriter"                as Base
+
+== DateFileWriter ==
+
+Main -> Date : <<create>> DateFileWriter()
+Main -> Date : write("date_report.txt")
+activate Date
+  Date -> Base : write("date_report.txt")
+  activate Base
+    Base -> Base  : open("date_report.txt", "w")
+    Base -> Date  : _write_content()
+    activate Date
+      Date --> Base : file.write("=== Date Report ===\n")
+      Date --> Base : file.write("Date: 2026-06-12\n")
+    deactivate Date
+    Base -> Base  : _write_footer()
+    note right : file.write("\n" + "=" * 30 + "\n")
+    Base -> Base  : file closed (context manager)
+  deactivate Base
+deactivate Date
+
+== TimeFileWriter ==
+
+Main -> Main  : writer = TimeFileWriter()
+Main -> Main  : writer.write("time_report.txt")
+note over Main
+  Same algorithm skeleton —
+  only _write_content() differs:
+  "=== Time Report ==="
+  "Time: 10:45:30"
+end note
+
+@enduml
