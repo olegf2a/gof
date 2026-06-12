@@ -1,0 +1,118 @@
+STRATEGY PATTERN — List Sorter
+══════════════════════════════════════════════════════════════
+
+  TASK: A sorter that can sort a list of integers using one of two
+        interchangeable algorithms — Bubble Sort or Quick Sort.
+        The algorithm is swappable at runtime without changing the client.
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  Strategy         → SortStrategy ABC   (defines sort contract)
+  ConcreteStrategy → BubbleSort         (O(n²) comparison-swap)
+  ConcreteStrategy → QuickSort          (O(n log n) avg, recursive pivot)
+  Context          → Sorter             (holds strategy, delegates sort)
+  Client           → __main__.py
+
+  STRATEGY ABC
+  ─────────────────────────────────────────────────────────
+  SortStrategy  (ABC)
+  + sort(data: list[int]) → list[int]  {abstract}
+      Receives an unsorted list, returns a new sorted list.
+      Must not mutate the original list.
+
+  CONCRETE STRATEGIES
+  ─────────────────────────────────────────────────────────
+  BubbleSort(SortStrategy)
+  + sort(data: list[int]) → list[int]
+      result = list(data)                ← copy, no mutation
+      for i in range(len(result)):
+          for j in range(len(result) - i - 1):
+              if result[j] > result[j+1]:
+                  swap result[j], result[j+1]
+      return result
+
+  QuickSort(SortStrategy)
+  + sort(data: list[int]) → list[int]
+      if len(data) <= 1: return list(data)
+      pivot = data[len(data) // 2]
+      left  = [x for x in data if x < pivot]
+      mid   = [x for x in data if x == pivot]
+      right = [x for x in data if x > pivot]
+      return sort(left) + mid + sort(right)
+
+  CONTEXT
+  ─────────────────────────────────────────────────────────
+  Sorter
+  - _strategy : SortStrategy
+  + __init__(strategy: SortStrategy)    → None
+  + set_strategy(strategy: SortStrategy) → None
+  + sort(data: list[int])               → list[int]
+      delegates to self._strategy.sort(data)
+
+  ALGORITHM COMPARISON
+  ─────────────────────────────────────────────────────────
+  ┌──────────────┬──────────────┬──────────────┬─────────────────────────────┐
+  │ Strategy     │ Best case    │ Average      │ Worst case                  │
+  ├──────────────┼──────────────┼──────────────┼─────────────────────────────┤
+  │ BubbleSort   │ O(n)         │ O(n²)        │ O(n²)   — large lists slow  │
+  │ QuickSort    │ O(n log n)   │ O(n log n)   │ O(n²)   — rare, sorted input│
+  └──────────────┴──────────────┴──────────────┴─────────────────────────────┘
+
+  Call flow — sort with BubbleSort:
+  ──────────────────────────────────────────────────────────
+  sorter = Sorter(BubbleSort())
+  result = sorter.sort([5, 3, 1, 4, 2])
+    → BubbleSort.sort([5, 3, 1, 4, 2])
+    → [1, 2, 3, 4, 5]
+
+  Call flow — swap strategy at runtime:
+  ──────────────────────────────────────────────────────────
+  sorter.set_strategy(QuickSort())
+  result = sorter.sort([5, 3, 1, 4, 2])
+    → QuickSort.sort([5, 3, 1, 4, 2])
+    → [1, 2, 3, 4, 5]
+
+  Original list is never mutated:
+  ──────────────────────────────────────────────────────────
+  data = [5, 3, 1, 4, 2]
+  result = sorter.sort(data)
+  data   → [5, 3, 1, 4, 2]   (unchanged)
+  result → [1, 2, 3, 4, 5]
+
+FILE STRUCTURE:
+  behavioral/strategy/
+  ├── __init__.py
+  ├── __main__.py                  ← demo: same list sorted by both strategies
+  ├── module_schema.txt
+  ├── sort_strategy.py             ← SortStrategy ABC
+  ├── sorter.py                    ← Sorter (context)
+  ├── strategies/
+  │   ├── __init__.py
+  │   ├── bubble_sort.py           ← BubbleSort
+  │   └── quick_sort.py            ← QuickSort
+  ├── uml/
+  │   ├── strategy_general.puml    ← abstract pattern diagram
+  │   ├── strategy_schema.puml     ← structural class diagram
+  │   └── strategy_flow.puml       ← sequence diagram
+  └── tests/
+      ├── __init__.py
+      └── test_strategy.py
+
+DIFFERENCE FROM RELATED PATTERNS
+══════════════════════════════════════════════════════════════
+
+  ┌─────────────┬──────────────────────────────────────────────────────────────┐
+  │ Pattern     │ Intent                                                       │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Strategy    │ Client selects and swaps the algorithm at runtime.           │
+  │             │ Context delegates to the strategy — no conditionals.         │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ State       │ Object transitions itself between states. The object drives  │
+  │             │ the swap — the client does not choose the next state.        │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Template    │ Defines the algorithm skeleton in a base class; subclasses   │
+  │ Method      │ override specific steps. Algorithm structure is fixed.       │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Key         │ Strategy: client swaps whole algorithm, structure varies.    │
+  │ distinction │ Template Method: structure fixed, only steps are overridden. │
+  └─────────────┴──────────────────────────────────────────────────────────────┘

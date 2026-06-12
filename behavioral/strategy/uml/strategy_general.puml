@@ -1,0 +1,64 @@
+@startuml strategy_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+}
+
+package "Context" {
+  class Context {
+    - _strategy : Strategy
+    + __init__(strategy: Strategy)    : None
+    + set_strategy(s: Strategy)       : None
+    + execute()                       : Result
+  }
+}
+
+package "Strategy" {
+  abstract class Strategy {
+    + execute(data) : Result  {abstract}
+  }
+
+  class ConcreteStrategyA {
+    + execute(data) : Result
+  }
+
+  class ConcreteStrategyB {
+    + execute(data) : Result
+  }
+
+  Strategy <|-- ConcreteStrategyA
+  Strategy <|-- ConcreteStrategyB
+}
+
+Client --> Context           : creates & drives
+Client --> ConcreteStrategyA : creates
+Client --> ConcreteStrategyB : creates
+Context o--> Strategy        : holds & delegates
+
+note right of Context
+  Delegates execute() to
+  the current strategy.
+  Client swaps strategy
+  via set_strategy().
+end note
+
+note right of Strategy
+  Algorithms are
+  interchangeable — same
+  interface, different
+  implementation.
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (holds)
+  -->   association
+end legend
+
+@enduml
