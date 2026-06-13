@@ -1,0 +1,84 @@
+@startuml visitor_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client" {
+  class "__main__" as Main {
+    + demo() : None
+  }
+}
+
+package "ObjectStructure" {
+  class Pizza {
+    - _ingredients : list[Ingredient]
+    + add(i: Ingredient) : None
+    + accept(v: Visitor) : None
+  }
+}
+
+package "Element" {
+  abstract class Ingredient {
+    + name  : str    {abstract}
+    + price : float  {abstract}
+    + accept(v: Visitor) : None  {abstract}
+  }
+
+  class Cheese    { name="Cheese"    \n price=1.50 }
+  class Bacon     { name="Bacon"     \n price=2.00 }
+  class Pineapple { name="Pineapple" \n price=0.80 }
+  class Mushroom  { name="Mushroom"  \n price=1.20 }
+  class Seafood   { name="Seafood"   \n price=3.50 }
+
+  Ingredient <|-- Cheese
+  Ingredient <|-- Bacon
+  Ingredient <|-- Pineapple
+  Ingredient <|-- Mushroom
+  Ingredient <|-- Seafood
+}
+
+package "Visitor" {
+  abstract class Visitor {
+    + visit_cheese(i: Cheese)       : None  {abstract}
+    + visit_bacon(i: Bacon)         : None  {abstract}
+    + visit_pineapple(i: Pineapple) : None  {abstract}
+    + visit_mushroom(i: Mushroom)   : None  {abstract}
+    + visit_seafood(i: Seafood)     : None  {abstract}
+  }
+
+  class CookVisitor {
+    + visit_*(i) : print("[Cook] {i.name}: ...")
+  }
+
+  class PriceVisitor {
+    - _total : float
+    + total  : float
+    + visit_*(i) : _total += i.price
+  }
+
+  Visitor <|-- CookVisitor
+  Visitor <|-- PriceVisitor
+}
+
+Main    -->  Pizza         : creates & drives
+Main    ..>  CookVisitor   : <<creates>>
+Main    ..>  PriceVisitor  : <<creates>>
+Pizza   o--> Ingredient    : holds
+Pizza   -->  Visitor       : passes to ingredient.accept()
+Cheese     --> Visitor : visit_cheese(self)
+Bacon      --> Visitor : visit_bacon(self)
+Pineapple  --> Visitor : visit_pineapple(self)
+Mushroom   --> Visitor : visit_mushroom(self)
+Seafood    --> Visitor : visit_seafood(self)
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (holds)
+  ..>   dependency (creates)
+  -->   association / call
+end legend
+
+@enduml
