@@ -1,0 +1,75 @@
+@startuml memento_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+}
+
+package "Originator" {
+  abstract class Originator {
+    + save()                      : Memento  {abstract}
+    + restore(m: Memento)         : None     {abstract}
+  }
+
+  class ConcreteOriginator {
+    - _state : str
+    + save()                      : Memento
+    + restore(m: Memento)         : None
+  }
+
+  Originator <|-- ConcreteOriginator
+}
+
+package "Memento" {
+  class Memento {
+    - _state : str
+  }
+}
+
+package "Caretaker" {
+  class Caretaker {
+    - _history : list[Memento]
+    + save(originator: Originator)            : None
+    + restore(originator: Originator, v: int) : None
+    + history()                               : list[Memento]
+  }
+}
+
+Client               --> Caretaker           : drives save / restore
+Client               --> ConcreteOriginator  : creates & writes
+Caretaker            o--> Memento            : stores snapshots
+ConcreteOriginator   ..> Memento             : <<creates>>
+ConcreteOriginator   ..> Memento             : <<reads on restore>>
+
+note right of Memento
+  Immutable snapshot of
+  originator state.
+  Only the originator
+  reads its content.
+end note
+
+note right of Caretaker
+  Stores snapshots but
+  never inspects them.
+  Restores by passing
+  snapshot back to originator.
+end note
+
+note right of ConcreteOriginator
+  save()    → creates Memento from current state.
+  restore() → applies Memento state to itself.
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (stores)
+  ..>   dependency (creates / reads)
+  -->   association
+end legend
+
+@enduml

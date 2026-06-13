@@ -1,0 +1,87 @@
+@startuml memento_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client" {
+  class "__main__" as Main {
+    + demo() : None
+  }
+}
+
+package "Memento" {
+  abstract class Memento {
+    - _version : str
+    + get_state()   : str  {abstract}
+    + get_version() : str
+  }
+
+  class TextSnapshot {
+    - _state : str
+    + get_state()   : str
+    + get_version() : str
+  }
+
+  Memento <|-- TextSnapshot
+}
+
+package "Originator" {
+  abstract class Originator {
+    + save()                  : Memento  {abstract}
+    + restore(m: Memento)     : None     {abstract}
+  }
+
+  class TextEditor {
+    - _content : str
+    + content                 : str
+    + write(text: str)        : None
+    + save()                  : TextSnapshot
+    + restore(m: Memento)     : None
+  }
+
+  Originator <|-- TextEditor
+}
+
+package "Caretaker" {
+  class VersionHistory {
+    - _history : dict[str, Memento]
+    + save(editor: Originator)                  : None
+    + restore(editor: Originator, v: str)       : None
+    + history()                                 : list[Memento]
+  }
+}
+
+Main               -->  TextEditor      : creates & writes
+Main               -->  VersionHistory  : drives save / restore
+VersionHistory     o--> Memento         : stores by version key
+TextEditor         ..>  TextSnapshot    : <<creates>>
+TextEditor         ..>  Memento         : <<reads on restore>>
+
+note right of TextSnapshot
+  Version key is a microsecond-
+  precision timestamp set in
+  Memento.__init__().
+end note
+
+note right of VersionHistory
+  dict keyed by version string.
+  Never reads snapshot content —
+  only passes it back to originator.
+end note
+
+note right of TextEditor
+  save()    → wraps _content in TextSnapshot.
+  restore() → reads state via get_state().
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (stores)
+  ..>   dependency (creates / reads)
+  -->   association
+end legend
+
+@enduml
