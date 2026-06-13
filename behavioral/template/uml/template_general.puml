@@ -1,0 +1,61 @@
+@startuml template_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+}
+
+package "AbstractClass" {
+  abstract class AbstractClass {
+    + template_method() : None
+    # _step()           : None  {abstract}
+    # _hook()           : None
+  }
+
+  class ConcreteClassA {
+    # _step()           : None
+  }
+
+  class ConcreteClassB {
+    # _step()           : None
+    # _hook()           : None
+  }
+
+  AbstractClass <|-- ConcreteClassA
+  AbstractClass <|-- ConcreteClassB
+}
+
+Client --> AbstractClass : calls template_method()
+
+note right of AbstractClass
+  template_method() defines
+  the fixed algorithm skeleton.
+  Abstract steps are filled in
+  by subclasses.
+  Hooks have a default
+  implementation — override
+  is optional.
+end note
+
+note right of ConcreteClassA
+  Overrides only abstract
+  steps — inherits the
+  default hook.
+end note
+
+note right of ConcreteClassB
+  Overrides both abstract
+  step and the hook.
+end note
+
+legend right
+  <|--  inheritance
+  -->   association
+end legend
+
+@enduml

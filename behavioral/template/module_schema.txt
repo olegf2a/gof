@@ -1,0 +1,95 @@
+TEMPLATE METHOD PATTERN — File Writer
+══════════════════════════════════════════════════════════════
+
+  TASK: Write current date or time to a file using a fixed algorithm.
+        The algorithm structure (open → content → footer → close) is
+        defined once in the base class. Subclasses override only
+        _write_content() to produce their specific output.
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  AbstractClass  → FileWriter        (template method + hook)
+  ConcreteClass  → DateFileWriter    (writes date header + current date)
+  ConcreteClass  → TimeFileWriter    (writes time header + current time)
+  Client         → __main__.py
+
+  ABSTRACT CLASS
+  ─────────────────────────────────────────────────────────
+  FileWriter  (ABC)
+  - _file : TextIOWrapper | None    ← set during write(), None before
+  + write(filename: str)   → None   ← TEMPLATE METHOD (fixed algorithm)
+      with open(filename, "w") as file:
+          self._file = file
+          self._write_content()     ← abstract — subclass fills in
+          self._write_footer()      ← hook    — default writes separator
+
+  + _write_content()       → None   {abstract}
+  + _write_footer()        → None   {hook — default: "\n" + "=" * 30 + "\n"}
+
+  CONCRETE CLASSES
+  ─────────────────────────────────────────────────────────
+  DateFileWriter(FileWriter)
+  + _write_content() →
+      file.write("=== Date Report ===\n")
+      file.write(f"Date: {datetime.now().strftime('%Y-%m-%d')}\n")
+
+  TimeFileWriter(FileWriter)
+  + _write_content() →
+      file.write("=== Time Report ===\n")
+      file.write(f"Time: {datetime.now().strftime('%H:%M:%S')}\n")
+
+  OUTPUT FORMAT
+  ─────────────────────────────────────────────────────────
+  date_report.txt:               time_report.txt:
+  ┌──────────────────────────┐   ┌──────────────────────────┐
+  │ === Date Report ===      │   │ === Time Report ===      │
+  │ Date: 2026-06-12         │   │ Time: 10:45:30           │
+  │                          │   │                          │
+  │ ══════════════════════   │   │ ══════════════════════   │
+  └──────────────────────────┘   └──────────────────────────┘
+
+  Call flow — DateFileWriter:
+  ──────────────────────────────────────────────────────────
+  writer = DateFileWriter()
+  writer.write("date_report.txt")
+    → open("date_report.txt", "w")
+    → DateFileWriter._write_content()
+        → "=== Date Report ===\n"
+        → "Date: 2026-06-12\n"
+    → FileWriter._write_footer()
+        → "\n==============================\n"
+    → file closed (context manager)
+
+FILE STRUCTURE:
+  behavioral/template/
+  ├── __init__.py
+  ├── __main__.py                    ← demo: writes both files to a temp dir
+  ├── module_schema.txt
+  ├── file_writer.py                 ← FileWriter ABC (template method)
+  ├── writers/
+  │   ├── __init__.py
+  │   ├── date_file_writer.py        ← DateFileWriter
+  │   └── time_file_writer.py        ← TimeFileWriter
+  ├── uml/
+  │   ├── template_general.puml      ← abstract pattern diagram
+  │   ├── template_schema.puml       ← structural class diagram
+  │   └── template_flow.puml         ← sequence diagram
+  └── tests/
+      ├── __init__.py
+      └── test_template.py
+
+DIFFERENCE FROM RELATED PATTERNS
+══════════════════════════════════════════════════════════════
+
+  ┌─────────────┬──────────────────────────────────────────────────────────────┐
+  │ Pattern     │ Intent                                                       │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Template    │ Algorithm structure fixed in base class. Subclasses override │
+  │ Method      │ specific steps only. Extension via inheritance.              │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Strategy    │ Whole algorithm is swappable at runtime via composition.     │
+  │             │ Extension via delegation, not inheritance.                   │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Key         │ Template Method: structure fixed, steps vary (inheritance).  │
+  │ distinction │ Strategy: structure varies, swapped by client (composition). │
+  └─────────────┴──────────────────────────────────────────────────────────────┘

@@ -1,0 +1,63 @@
+@startuml template_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client" {
+  class "__main__" as Main {
+    + demo() : None
+  }
+}
+
+package "AbstractClass" {
+  abstract class FileWriter {
+    - _file : TextIOWrapper | None
+    + write(filename: str)  : None
+    # _write_content()      : None  {abstract}
+    # _write_footer()       : None  {hook}
+  }
+
+  class DateFileWriter {
+    # _write_content()      : None
+  }
+
+  class TimeFileWriter {
+    # _write_content()      : None
+  }
+
+  FileWriter <|-- DateFileWriter
+  FileWriter <|-- TimeFileWriter
+}
+
+Main --> DateFileWriter : creates & calls write()
+Main --> TimeFileWriter : creates & calls write()
+
+note right of FileWriter
+  write() — template method:
+  1. open file
+  2. _write_content()  ← abstract
+  3. _write_footer()   ← hook
+  4. close file
+end note
+
+note right of DateFileWriter
+  _write_content():
+  "=== Date Report ==="
+  "Date: YYYY-MM-DD"
+end note
+
+note right of TimeFileWriter
+  _write_content():
+  "=== Time Report ==="
+  "Time: HH:MM:SS"
+end note
+
+legend right
+  <|--  inheritance
+  -->   association
+end legend
+
+@enduml
