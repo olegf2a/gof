@@ -1,0 +1,57 @@
+@startuml strategy_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam sequenceLifeLineBorderColor #888888
+
+participant "__main__"              as Main
+participant "sorter : Sorter"       as Sorter
+participant "BubbleSortStrategy"    as Bubble
+participant "QuickSortStrategy"     as Quick
+
+== Setup ==
+
+Main   -> Bubble : <<create>> BubbleSortStrategy()
+Main   -> Sorter : <<create>> Sorter(bubble)
+note right of Sorter : _strategy = BubbleSortStrategy
+
+== Sort with BubbleSort ==
+
+Main   -> Sorter : sort([64, 34, 25, 12, 22, 11, 90])
+activate Sorter
+  Sorter -> Bubble : sort([64, 34, 25, 12, 22, 11, 90])
+  activate Bubble
+    Bubble -> Bubble : result = items.copy()
+    Bubble -> Bubble : comparison-swap passes
+    Bubble --> Sorter : [11, 12, 22, 25, 34, 64, 90]
+  deactivate Bubble
+  Sorter --> Main  : [11, 12, 22, 25, 34, 64, 90]
+deactivate Sorter
+
+== Swap strategy at runtime ==
+
+Main   -> Quick  : <<create>> QuickSortStrategy()
+Main   -> Sorter : set_strategy(quick)
+note right of Sorter : _strategy = QuickSortStrategy
+
+== Sort with QuickSort ==
+
+Main   -> Sorter : sort([64, 34, 25, 12, 22, 11, 90])
+activate Sorter
+  Sorter -> Quick : sort([64, 34, 25, 12, 22, 11, 90])
+  activate Quick
+    Quick -> Quick : result = items.copy()
+    Quick -> Quick : _quicksort(result, 0, 6)
+    Quick -> Quick : _partition → pivot, recursive calls
+    Quick --> Sorter : [11, 12, 22, 25, 34, 64, 90]
+  deactivate Quick
+  Sorter --> Main : [11, 12, 22, 25, 34, 64, 90]
+deactivate Sorter
+
+note over Main, Quick
+  Original list [64, 34, 25, 12, 22, 11, 90]
+  is unchanged after both calls.
+end note
+
+@enduml

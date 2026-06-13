@@ -1,0 +1,76 @@
+@startuml strategy_schema
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client" {
+  class "__main__" as Main {
+    + demo() : None
+  }
+}
+
+package "Context" {
+  class Sorter {
+    - _strategy : SortStrategy
+    + __init__(strategy: SortStrategy)   : None
+    + set_strategy(s: SortStrategy)      : None
+    + sort(items: list[int])             : list[int]
+  }
+}
+
+package "Strategy" {
+  abstract class SortStrategy {
+    + sort(items: list[int]) : list[int]  {abstract}
+  }
+
+  class BubbleSortStrategy {
+    + sort(items: list[int]) : list[int]
+  }
+
+  class QuickSortStrategy {
+    + sort(items: list[int]) : list[int]
+    - _quicksort(items, low, high) : None
+    - _partition(items, low, high) : int
+  }
+
+  SortStrategy <|-- BubbleSortStrategy
+  SortStrategy <|-- QuickSortStrategy
+}
+
+Main    -->  Sorter              : creates & drives
+Main    ..>  BubbleSortStrategy  : <<creates>>
+Main    ..>  QuickSortStrategy   : <<creates>>
+Sorter  o--> SortStrategy        : holds & delegates
+
+note right of BubbleSortStrategy
+  O(n²) avg.
+  Early exit if no swaps
+  in a pass (swapped flag).
+  Returns a copy — original
+  list is never mutated.
+end note
+
+note right of QuickSortStrategy
+  O(n log n) avg.
+  In-place Lomuto partition
+  on a copy of the input.
+  Returns sorted copy.
+end note
+
+note right of Sorter
+  set_strategy() swaps
+  the algorithm at runtime
+  without changing the client.
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (holds)
+  ..>   dependency (creates)
+  -->   association
+end legend
+
+@enduml
