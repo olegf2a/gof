@@ -1,0 +1,76 @@
+@startuml state_flow
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #f9f9f9
+skinparam sequenceParticipantBorderColor #444444
+skinparam sequenceLifeLineBorderColor #888888
+
+participant "__main__"           as Main
+participant "oven : PizzaOven"   as Oven
+participant "ColdState"          as Cold
+participant "ReadyState"         as Ready
+participant "OverheatedState"    as Over
+
+== Setup ==
+
+Main -> Oven  : <<create>> PizzaOven()
+note right of Oven : _state = ColdState()
+
+== Heat up (Cold → Ready) ==
+
+Main -> Oven  : heat_up()
+activate Oven
+  Oven -> Cold  : heat_up(oven)
+  activate Cold
+    Cold -> Oven  : change_state(ReadyState())
+    note right of Oven : _state = ReadyState()
+    Cold --> Oven : "[Oven] Heating up — oven is ready to bake."
+  deactivate Cold
+deactivate Oven
+
+== Bake (Ready) ==
+
+Main -> Oven  : bake("Margherita")
+activate Oven
+  Oven -> Ready : bake(oven, "Margherita")
+  activate Ready
+    Ready --> Oven : "[Oven] Baking 'Margherita' — perfect temperature!"
+  deactivate Ready
+deactivate Oven
+
+== Overheat (Ready → Overheated) ==
+
+Main -> Oven  : heat_up()
+activate Oven
+  Oven -> Ready : heat_up(oven)
+  activate Ready
+    Ready -> Oven : change_state(OverheatedState())
+    note right of Oven : _state = OverheatedState()
+    Ready --> Oven : "[Oven] Overheating — temperature exceeded safe limit."
+  deactivate Ready
+deactivate Oven
+
+== Try to bake (Overheated) ==
+
+Main -> Oven  : bake("Quattro Formaggi")
+activate Oven
+  Oven -> Over  : bake(oven, "Quattro Formaggi")
+  activate Over
+    Over --> Oven : raises RuntimeError("Cannot bake — oven is overheated.")
+  deactivate Over
+  Oven --> Main : raises RuntimeError
+deactivate Oven
+
+== Cool down (Overheated → Ready) ==
+
+Main -> Oven  : cool_down()
+activate Oven
+  Oven -> Over  : cool_down(oven)
+  activate Over
+    Over -> Oven  : change_state(ReadyState())
+    note right of Oven : _state = ReadyState()
+    Over --> Oven : "[Oven] Cooling down — oven is ready to bake."
+  deactivate Over
+deactivate Oven
+
+@enduml

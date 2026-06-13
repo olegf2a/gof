@@ -1,0 +1,74 @@
+@startuml state_general
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam ArrowColor #444444
+skinparam ClassBorderColor #444444
+skinparam PackageBackgroundColor #f9f9f9
+
+package "Client code" {
+  class Client
+}
+
+package "Context" {
+  class Context {
+    - _state : State
+    + change_state(s: State) : None
+    + request()              : None
+  }
+}
+
+package "State" {
+  abstract class State {
+    + handle(context: Context) : None  {abstract}
+    + name()                   : str   {abstract}
+  }
+
+  class ConcreteStateA {
+    + handle(context: Context) : None
+    + name()                   : str
+  }
+
+  class ConcreteStateB {
+    + handle(context: Context) : None
+    + name()                   : str
+  }
+
+  class ConcreteStateC {
+    + handle(context: Context) : None
+    + name()                   : str
+  }
+
+  State <|-- ConcreteStateA
+  State <|-- ConcreteStateB
+  State <|-- ConcreteStateC
+}
+
+Client         --> Context        : drives
+Context        o--> State         : holds current state
+ConcreteStateA ..> ConcreteStateB : <<transition>>
+ConcreteStateB ..> ConcreteStateC : <<transition>>
+ConcreteStateC ..> ConcreteStateB : <<transition>>
+
+note right of Context
+  Delegates all behaviour
+  to the current state.
+  States call change_state()
+  to drive transitions.
+end note
+
+note right of State
+  Each state encapsulates
+  both behaviour and the
+  transition logic to the
+  next state.
+end note
+
+legend right
+  <|--  inheritance
+  o-->  aggregation (holds)
+  ..>   dependency / transition
+  -->   association
+end legend
+
+@enduml

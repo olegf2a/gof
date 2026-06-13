@@ -1,0 +1,130 @@
+STATE PATTERN — Pizza Oven
+══════════════════════════════════════════════════════════════
+
+  TASK: A pizza oven that moves through three states — Cold, Ready,
+        and Overheated. Each state defines its own behaviour for
+        heat_up(), cool_down(), and bake(). Illegal transitions and
+        bake() calls in wrong states raise RuntimeError.
+
+  ROLES
+  ─────────────────────────────────────────────────────────
+  State   → OvenState ABC     (declares heat_up / cool_down / bake / name)
+  Context → PizzaOven         (holds current state, delegates all calls)
+  ConcreteState → ColdState       (initial state)
+  ConcreteState → ReadyState      (baking is possible)
+  ConcreteState → OverheatedState (too hot to bake)
+  Client  → __main__.py
+
+  STATE ABC
+  ─────────────────────────────────────────────────────────
+  OvenState  (ABC)
+  + heat_up(context: PizzaOven)            → None  {abstract}
+  + cool_down(context: PizzaOven)          → None  {abstract}
+  + bake(context: PizzaOven, pizza: str)   → None  {abstract}
+  + name()                                 → str   {abstract}
+
+  PizzaOven imports avoided via TYPE_CHECKING guard in all state files.
+
+  CONTEXT
+  ─────────────────────────────────────────────────────────
+  PizzaOven
+  - _state : OvenState    ← starts as ColdState()
+  + change_state(new_state: OvenState) → None
+  + state_name                         → str   (property)
+  + heat_up()                          → None  (delegates to _state.heat_up(self))
+  + cool_down()                        → None  (delegates to _state.cool_down(self))
+  + bake(pizza: str)                   → None  (delegates to _state.bake(self, pizza))
+
+  CONCRETE STATES
+  ─────────────────────────────────────────────────────────
+  ColdState(OvenState)
+  + heat_up(context)          → context.change_state(ReadyState())
+                                 print("[Oven] Heating up — oven is ready to bake.")
+  + cool_down(context)        → raises RuntimeError("Oven is already cold.")
+  + bake(context, pizza)      → raises RuntimeError("Cannot bake — oven is cold.")
+  + name()                    → "Cold"
+
+  ReadyState(OvenState)
+  + heat_up(context)          → context.change_state(OverheatedState())
+                                 print("[Oven] Overheating — temperature exceeded safe limit.")
+  + cool_down(context)        → context.change_state(ColdState())
+                                 print("[Oven] Cooling down — oven is cold.")
+  + bake(context, pizza)      → print(f"[Oven] Baking '{pizza}' — perfect temperature!")
+  + name()                    → "Ready"
+
+  OverheatedState(OvenState)
+  + heat_up(context)          → raises RuntimeError("Cannot heat up — oven is already overheated.")
+  + cool_down(context)        → context.change_state(ReadyState())
+                                 print("[Oven] Cooling down — oven is ready to bake.")
+  + bake(context, pizza)      → raises RuntimeError("Cannot bake — oven is overheated.")
+  + name()                    → "Overheated"
+
+  STATE TRANSITION TABLE
+  ─────────────────────────────────────────────────────────
+  ┌────────────────┬──────────────────┬──────────────────┬──────────────────────┐
+  │ State          │ heat_up()        │ cool_down()      │ bake()               │
+  ├────────────────┼──────────────────┼──────────────────┼──────────────────────┤
+  │ Cold           │ → Ready          │ RuntimeError     │ RuntimeError         │
+  │ Ready          │ → Overheated     │ → Cold           │ bakes pizza ✓        │
+  │ Overheated     │ RuntimeError     │ → Ready          │ RuntimeError         │
+  └────────────────┴──────────────────┴──────────────────┴──────────────────────┘
+
+  Call flow — normal bake cycle:
+  ──────────────────────────────────────────────────────────
+  oven = PizzaOven()                  → state: Cold
+
+  oven.heat_up()
+    → ColdState.heat_up(oven)
+    → oven.change_state(ReadyState()) → state: Ready
+
+  oven.bake("Margherita")
+    → ReadyState.bake(oven, "Margherita")
+    → "[Oven] Baking 'Margherita' — perfect temperature!"
+
+  oven.heat_up()
+    → ReadyState.heat_up(oven)
+    → oven.change_state(OverheatedState()) → state: Overheated
+
+  oven.bake("Pepperoni")
+    → OverheatedState.bake(oven, "Pepperoni")
+    → raises RuntimeError("Cannot bake — oven is overheated.")
+
+  oven.cool_down()
+    → OverheatedState.cool_down(oven)
+    → oven.change_state(ReadyState()) → state: Ready
+
+FILE STRUCTURE:
+  behavioral/state/
+  ├── __init__.py
+  ├── __main__.py                  ← demo: full bake cycle + error cases
+  ├── module_schema.txt
+  ├── oven_state.py                ← OvenState ABC
+  ├── pizza_oven.py                ← PizzaOven (context)
+  ├── states/
+  │   ├── __init__.py
+  │   ├── cold_state.py            ← ColdState
+  │   ├── ready_state.py           ← ReadyState
+  │   └── overheated_state.py      ← OverheatedState
+  ├── uml/
+  │   ├── state_general.puml       ← abstract pattern diagram
+  │   ├── state_schema.puml        ← structural class diagram
+  │   └── state_flow.puml          ← sequence diagram
+  └── tests/
+      ├── __init__.py
+      └── test_state.py
+
+DIFFERENCE FROM RELATED PATTERNS
+══════════════════════════════════════════════════════════════
+
+  ┌─────────────┬──────────────────────────────────────────────────────────────┐
+  │ Pattern     │ Intent                                                       │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ State       │ Object changes behaviour when its internal state changes.    │
+  │             │ Each state is a class; transitions are explicit method calls.│
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Strategy    │ Swaps an algorithm at runtime from outside the object.       │
+  │             │ The object does not drive the swap — the client does.        │
+  ├─────────────┼──────────────────────────────────────────────────────────────┤
+  │ Key         │ State: object transitions itself (states call change_state). │
+  │ distinction │ Strategy: client swaps the algorithm explicitly.             │
+  └─────────────┴──────────────────────────────────────────────────────────────┘
