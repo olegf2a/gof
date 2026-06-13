@@ -1,11 +1,14 @@
-import unittest
+from unittest import TestCase
+from unittest import main as unittest_main
+from unittest.mock import MagicMock
 
+from ..sort_strategy import SortStrategy
 from ..sorter import Sorter
 from ..strategies.bubble_sort import BubbleSortStrategy
 from ..strategies.quick_sort import QuickSortStrategy
 
 
-class TestBubbleSortStrategy(unittest.TestCase):
+class TestBubbleSortStrategy(TestCase):
     def setUp(self) -> None:
         self.strategy = BubbleSortStrategy()
 
@@ -33,7 +36,7 @@ class TestBubbleSortStrategy(unittest.TestCase):
         self.assertEqual(data, [3, 1, 2])
 
 
-class TestQuickSortStrategy(unittest.TestCase):
+class TestQuickSortStrategy(TestCase):
     def setUp(self) -> None:
         self.strategy = QuickSortStrategy()
 
@@ -61,36 +64,36 @@ class TestQuickSortStrategy(unittest.TestCase):
         self.assertEqual(data, [3, 1, 2])
 
 
-class TestSorter(unittest.TestCase):
+class TestSorter(TestCase):
     def setUp(self) -> None:
         self.data = [64, 34, 25, 12, 22, 11, 90]
         self.expected = [11, 12, 22, 25, 34, 64, 90]
 
-    def test_sorts_with_bubble(self) -> None:
-        sorter = Sorter(BubbleSortStrategy())
-        self.assertEqual(sorter.sort(self.data), self.expected)
+    def test_sort(self) -> None:
+        mock_strategy = MagicMock(spec=SortStrategy)
+        mock_strategy.sort.return_value = self.expected
 
-    def test_sorts_with_quick(self) -> None:
-        sorter = Sorter(QuickSortStrategy())
-        self.assertEqual(sorter.sort(self.data), self.expected)
+        sorter = Sorter(mock_strategy)
+        result = sorter.sort(self.data)
+
+        mock_strategy.sort.assert_called_once_with(self.data)
+        self.assertEqual(result, self.expected)
 
     def test_set_strategy_swaps_at_runtime(self) -> None:
-        sorter = Sorter(BubbleSortStrategy())
-        self.assertEqual(sorter.sort(self.data), self.expected)
-        sorter.set_strategy(QuickSortStrategy())
-        self.assertEqual(sorter.sort(self.data), self.expected)
+        mock_strategy_1 = MagicMock(spec=SortStrategy)
+        mock_strategy_1.sort.return_value = self.expected
+        mock_strategy_2 = MagicMock(spec=SortStrategy)
+        mock_strategy_2.sort.return_value = self.expected
 
-    def test_both_strategies_produce_same_result(self) -> None:
-        bubble = Sorter(BubbleSortStrategy()).sort(self.data)
-        quick = Sorter(QuickSortStrategy()).sort(self.data)
-        self.assertEqual(bubble, quick)
+        sorter = Sorter(mock_strategy_1)
+        sorter.sort(self.data)
+        mock_strategy_1.sort.assert_called_once_with(self.data)
 
-    def test_does_not_mutate_original(self) -> None:
-        original = self.data.copy()
-        Sorter(BubbleSortStrategy()).sort(self.data)
-        Sorter(QuickSortStrategy()).sort(self.data)
-        self.assertEqual(self.data, original)
+        sorter.set_strategy(mock_strategy_2)
+        sorter.sort(self.data)
+        mock_strategy_2.sort.assert_called_once_with(self.data)
+        mock_strategy_1.sort.assert_called_once()
 
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest_main()
