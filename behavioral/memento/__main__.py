@@ -1,4 +1,5 @@
 from .caretaker import VersionHistory
+from .exceptions import VersionNotFoundException
 from .text_editor import TextEditor
 
 
@@ -43,8 +44,8 @@ def demo() -> None:
     print("\n--- Restore to unknown version ---")
     try:
         history.restore(editor, "2000-01-01 00:00:00.000000")
-    except RuntimeError as e:
-        print(f"  RuntimeError: {e}")
+    except VersionNotFoundException as e:
+        print(f"  VersionNotFoundException: {e}")
 
 
 if __name__ == "__main__":

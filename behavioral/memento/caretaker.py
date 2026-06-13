@@ -1,3 +1,4 @@
+from .exceptions import VersionNotFoundException
 from .memento import Memento
 from .originator import Originator
 
@@ -14,7 +15,7 @@ class VersionHistory:
         try:
             editor.restore(self._history[version])
         except KeyError:
-            raise RuntimeError(f"Version {version} does not exist")
+            raise VersionNotFoundException(version)
 
     def history(self) -> list[Memento]:
         return list(self._history.values())

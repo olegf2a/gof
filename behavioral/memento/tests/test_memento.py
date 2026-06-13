@@ -1,6 +1,8 @@
 import unittest
 
 from ..caretaker import VersionHistory
+from ..exceptions import MementoException, VersionNotFoundException
+from ..memento import Memento
 from ..text_editor import TextEditor
 from ..text_snapshot import TextSnapshot
 
@@ -64,6 +66,14 @@ class TestTextEditor(unittest.TestCase):
         self.editor.restore(snap)
         self.assertEqual(self.editor.content, "saved state")
 
+    def test_restore_wrong_type_raises_type_error(self) -> None:
+        class FakeMemento(Memento):
+            def get_state(self) -> str:
+                return "fake"
+
+        with self.assertRaises(TypeError):
+            self.editor.restore(FakeMemento())
+
 
 class TestVersionHistory(unittest.TestCase):
     def setUp(self) -> None:
@@ -97,10 +107,22 @@ class TestVersionHistory(unittest.TestCase):
         self.history.restore(self.editor, key2)
         self.assertEqual(self.editor.content, "second")
 
-    def test_restore_invalid_version_raises(self) -> None:
+    def test_restore_invalid_version_raises_version_not_found(self) -> None:
         self._save("v1")
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(VersionNotFoundException):
             self.history.restore(self.editor, "2000-01-01 00:00:00.000000")
+
+    def test_version_not_found_is_memento_exception(self) -> None:
+        self._save("v1")
+        with self.assertRaises(MementoException):
+            self.history.restore(self.editor, "2000-01-01 00:00:00.000000")
+
+    def test_version_not_found_message_contains_version(self) -> None:
+        self._save("v1")
+        bad_version = "2000-01-01 00:00:00.000000"
+        with self.assertRaises(VersionNotFoundException) as cm:
+            self.history.restore(self.editor, bad_version)
+        self.assertIn(bad_version, str(cm.exception))
 
     def test_history_returns_copy(self) -> None:
         self._save("v1")
@@ -119,6 +141,18 @@ class TestVersionHistory(unittest.TestCase):
             self._save(text)
         keys = [s.get_version() for s in self.history.history()]
         self.assertEqual(len(keys), len(set(keys)))
+
+
+class TestExceptions(unittest.TestCase):
+    def test_version_not_found_is_subclass_of_memento_exception(self) -> None:
+        self.assertTrue(issubclass(VersionNotFoundException, MementoException))
+
+    def test_memento_exception_is_subclass_of_exception(self) -> None:
+        self.assertTrue(issubclass(MementoException, Exception))
+
+    def test_version_not_found_message(self) -> None:
+        exc = VersionNotFoundException("2000-01-01")
+        self.assertIn("2000-01-01", str(exc))
 
 
 if __name__ == "__main__":
